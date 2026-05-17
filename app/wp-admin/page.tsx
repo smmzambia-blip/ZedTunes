@@ -94,8 +94,8 @@ export default function AdminDashboard() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1048487) {
-        alert("Image is too large. Please upload an image smaller than 1MB.");
+      if (file.size > 700000) {
+        alert("Image is too large. Please upload an image smaller than 700KB.");
         return;
       }
       const reader = new FileReader();
@@ -109,8 +109,8 @@ export default function AdminDashboard() {
   const handleArtistImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1048487) {
-        alert("Image is too large. Please upload an image smaller than 1MB.");
+      if (file.size > 700000) {
+        alert("Image is too large. Please upload an image smaller than 700KB.");
         return;
       }
       const reader = new FileReader();
