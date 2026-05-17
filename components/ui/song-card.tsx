@@ -7,6 +7,7 @@ import { Download, Edit, Music, Calendar } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import Image from 'next/image';
+import { downloadFile } from '@/lib/download';
 
 import { Timestamp } from 'firebase/firestore';
 
@@ -18,9 +19,10 @@ interface SongCardProps {
   imageBase64?: string;
   category?: string;
   createdAt?: Timestamp;
+  archiveLink?: string;
 }
 
-export function SongCard({ id, title, artist, imageBase64, category, createdAt }: SongCardProps) {
+export function SongCard({ id, title, artist, imageBase64, category, createdAt, archiveLink }: SongCardProps) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   const formatDate = (date: Timestamp | undefined) => {
@@ -79,6 +81,11 @@ export function SongCard({ id, title, artist, imageBase64, category, createdAt }
             title="Download"
             onClick={(e) => {
               e.preventDefault();
+              if (archiveLink) {
+                downloadFile(archiveLink, `${title} - ${artist}.mp3`);
+              } else {
+                window.location.href = `/song/${id}`;
+              }
             }}
           >
             <Download size={10} />

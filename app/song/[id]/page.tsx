@@ -8,6 +8,8 @@ import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import Link from "next/link";
 import Image from "next/image";
 
+import { downloadFile } from "@/lib/download";
+
 interface Song {
   id: string;
   title: string;
@@ -146,13 +148,13 @@ export default function SongPage({ params }: { params: { id: string } }) {
                 </div>
               )}
               <div className="flex flex-wrap gap-4">
-                <a 
-                  href={song.archiveLink} target="_blank" rel="noopener noreferrer"
+                <button 
+                  onClick={() => downloadFile(song.archiveLink!, `${song.title} - ${song.artist}.mp3`)}
                   className="bg-black text-[#39FF14] px-10 py-4 rounded-full font-black hover:scale-105 transition flex items-center gap-3 shadow-lg shadow-black/10"
                 >
                   <Download size={22} />
                   FREE DOWNLOAD
-                </a>
+                </button>
                 <button className="w-14 h-14 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center hover:bg-gray-200 hover:text-red-500 transition shadow-sm border border-gray-200">
                   <Heart size={24} />
                 </button>
@@ -200,13 +202,13 @@ export default function SongPage({ params }: { params: { id: string } }) {
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-xs text-gray-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">MP3 • 320kbps</span>
-                  <a 
-                    href={track.url} target="_blank" rel="noopener noreferrer"
+                  <button 
+                    onClick={() => downloadFile(track.url, `${track.title} - ${song.artist}.mp3`)}
                     className="p-2.5 bg-gray-50 text-gray-400 rounded-xl hover:bg-black hover:text-[#39FF14] transition-all border border-gray-200"
                     title="Download Track"
                   >
                     <Download size={18} />
-                  </a>
+                  </button>
                 </div>
               </div>
             ))}

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Search, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { auth, db } from '@/lib/firebase';
-import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
 export function TopNav() {
@@ -32,15 +32,6 @@ export function TopNav() {
     });
     return () => unsubscribe();
   }, []);
-
-  const handleLogin = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Login failed", error);
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -89,17 +80,13 @@ export function TopNav() {
             </button>
           </div>
 
-          {isAdmin ? (
+          {isAdmin && (
             <div className="flex items-center gap-3">
               <Link href="/wp-admin" className="text-[10px] font-black text-white bg-blue-600 px-3 py-1.5 rounded-full hover:bg-blue-700 transition uppercase tracking-tighter">WP-Admin</Link>
               <button onClick={handleLogout} className="p-2 text-gray-500 hover:text-red-600 transition-colors" title="Logout">
                 <LogOut size={16} />
               </button>
             </div>
-          ) : (
-            <button onClick={handleLogin} className="text-[10px] font-black text-gray-400 border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-50 transition uppercase tracking-tighter">
-              Login
-            </button>
           )}
         </div>
       </div>

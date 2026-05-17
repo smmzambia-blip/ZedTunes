@@ -31,9 +31,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased flex flex-col h-screen bg-white text-black overflow-hidden relative font-sans`}>
         <SiteIdentity />
-        <TopNav />
         <main className="flex flex-1 overflow-hidden">
           <section className="flex-1 overflow-y-auto flex flex-col">
+            <TopNav />
             <div className="p-4 sm:p-8 flex flex-col gap-10 flex-1">
               {children}
             </div>

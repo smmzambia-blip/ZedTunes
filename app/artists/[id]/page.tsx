@@ -23,6 +23,7 @@ interface Song {
   imageBase64?: string;
   category?: string;
   createdAt?: Timestamp;
+  archiveLink?: string;
 }
 
 export default function ArtistDetailPage({ params }: { params: { id: string } }) {
