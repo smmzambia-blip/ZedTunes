@@ -12,6 +12,7 @@ interface Song {
   id: string;
   title: string;
   artist: string;
+  slug?: string;
   views?: string;
   imageBase64?: string;
   category?: string;

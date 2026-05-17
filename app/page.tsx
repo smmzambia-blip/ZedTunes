@@ -6,6 +6,7 @@ import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { SongCard } from '@/components/ui/song-card';
 import Link from 'next/link';
 import Image from 'next/image';
+import { generateSlug } from '@/lib/slug';
 
 import { Timestamp } from 'firebase/firestore';
 
@@ -13,6 +14,7 @@ interface Song {
   id: string;
   title: string;
   artist: string;
+  slug?: string;
   views?: string;
   imageBase64?: string;
   category?: string;
@@ -23,6 +25,13 @@ interface Song {
 export default function Home() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const getSongHref = (song: Song) => {
+    if (!song) return '#';
+    const slug = song.slug || generateSlug(song.title);
+    const prefix = song.category === 'Album' ? 'album' : 'song';
+    return `/${prefix}/${slug}`;
+  };
 
   useEffect(() => {
     const fetchSongs = async () => {
@@ -56,7 +65,7 @@ export default function Home() {
           {loading ? (
             <div className="aspect-[16/9] w-full bg-gray-100 rounded-[2rem] animate-pulse" />
           ) : featured ? (
-            <Link href={`/song/${featured.id}`} className="group relative block aspect-[16/9] w-full rounded-[2.5rem] overflow-hidden bg-black shadow-2xl">
+            <Link href={getSongHref(featured)} className="group relative block aspect-[16/9] w-full rounded-[2.5rem] overflow-hidden bg-black shadow-2xl">
                {featured.imageBase64 && (
                  <Image 
                    src={featured.imageBase64} 
@@ -90,7 +99,7 @@ export default function Home() {
               {loading ? (
                 [...Array(5)].map((_, i) => <div key={i} className="h-20 bg-gray-200/50 rounded-2xl animate-pulse" />)
               ) : hotReleases.map((song) => (
-                <Link key={song.id} href={`/song/${song.id}`} className="flex items-center gap-4 p-2 rounded-2xl hover:bg-white hover:shadow-sm transition-all group">
+                <Link key={song.id} href={getSongHref(song)} className="flex items-center gap-4 p-2 rounded-2xl hover:bg-white hover:shadow-sm transition-all group">
                   <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shadow-sm shrink-0 relative">
                     {song.imageBase64 && (
                       <Image 

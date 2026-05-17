@@ -7,6 +7,7 @@ import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, getDocs, orderBy, query, setDoc, getDoc } from 'firebase/firestore';
 import { Upload, Trash2, Edit, Plus, Users, Music, X, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
+import { generateSlug } from '@/lib/slug';
 
 enum OperationType {
   CREATE = 'create',
@@ -254,8 +255,10 @@ export default function AdminDashboard() {
     console.log("Publishing/Updating post...");
     setIsSaving(true);
     try {
+      const slug = generateSlug(uploadData.title);
       const dataToSave = {
         ...uploadData,
+        slug,
         // If not an album, we might not need tracks, but keeping it clean:
         tracks: uploadData.category === 'Album' ? uploadData.tracks : []
       };
@@ -297,14 +300,17 @@ export default function AdminDashboard() {
     e.preventDefault();
     setIsSaving(true);
     try {
+      const slug = generateSlug(artistData.name);
       if (editingArtistId) {
         await updateDoc(doc(db, 'artists', editingArtistId), {
-          ...artistData
+          ...artistData,
+          slug
         });
         alert("Artist updated successfully!");
       } else {
         await addDoc(collection(db, 'artists'), {
           ...artistData,
+          slug,
           createdAt: serverTimestamp()
         });
         alert("Artist added successfully!");

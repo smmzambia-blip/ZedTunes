@@ -8,6 +8,7 @@ import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import Image from 'next/image';
 import { downloadFile } from '@/lib/download';
+import { generateSlug } from '@/lib/slug';
 
 import { Timestamp } from 'firebase/firestore';
 
@@ -15,19 +16,31 @@ interface SongCardProps {
   id: string;
   title: string;
   artist: string;
+  slug?: string;
   views?: string;
   imageBase64?: string;
   category?: string;
-  createdAt?: Timestamp;
+  createdAt?: Timestamp | string | null;
   archiveLink?: string;
 }
 
-export function SongCard({ id, title, artist, imageBase64, category, createdAt, archiveLink }: SongCardProps) {
+export function SongCard({ id, title, artist, slug, imageBase64, category, createdAt, archiveLink }: SongCardProps) {
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const formatDate = (date: Timestamp | undefined) => {
+  const finalSlug = slug || generateSlug(title);
+  const prefix = category === 'Album' ? 'album' : 'song';
+  const href = `/${prefix}/${finalSlug}`;
+
+  const formatDate = (date: Timestamp | string | null | undefined) => {
     if (!date) return '';
-    const d = date.toDate ? date.toDate() : new Date(date as unknown as string);
+    let d: Date;
+    if (typeof date === 'string') {
+      d = new Date(date);
+    } else if (date && typeof date === 'object' && 'toDate' in date) {
+      d = (date as unknown as Timestamp).toDate();
+    } else {
+      d = new Date();
+    }
     return d.toLocaleDateString('en-US', { 
       day: 'numeric', 
       month: 'short', 
@@ -43,7 +56,7 @@ export function SongCard({ id, title, artist, imageBase64, category, createdAt, 
   }, []);
 
   return (
-    <Link href={`/song/${id}`} className="flex flex-col gap-2 group cursor-pointer min-w-0 relative">
+    <Link href={href} className="flex flex-col gap-2 group cursor-pointer min-w-0 relative">
       <div className="aspect-square bg-gray-100 rounded-2xl border border-gray-100 overflow-hidden relative">
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-20">
           <div className="w-8 h-8 bg-[#39FF14] rounded-full flex items-center justify-center text-black font-black text-[8px] pl-[1px] transition hover:scale-105 shadow-xl"
@@ -84,7 +97,7 @@ export function SongCard({ id, title, artist, imageBase64, category, createdAt, 
               if (archiveLink) {
                 downloadFile(archiveLink, `${title} - ${artist}.mp3`);
               } else {
-                window.location.href = `/song/${id}`;
+                window.location.href = href;
               }
             }}
           >

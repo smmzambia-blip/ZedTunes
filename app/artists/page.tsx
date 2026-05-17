@@ -7,11 +7,13 @@ import Image from 'next/image';
 import { Users, Edit } from 'lucide-react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import Link from 'next/link';
+import { generateSlug } from '@/lib/slug';
 
 interface Artist {
   id: string;
   name: string;
   bio: string;
+  slug?: string;
   imageBase64?: string;
 }
 
@@ -19,6 +21,11 @@ export default function ArtistsPage() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<FirebaseUser | null>(null);
+
+  const getArtistHref = (artist: Artist) => {
+    const slug = artist.slug || generateSlug(artist.name);
+    return `/artist/${slug}`;
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -81,7 +88,7 @@ export default function ArtistsPage() {
                   <Edit size={14} />
                 </Link>
               )}
-              <Link href={`/artists/${artist.id}`} className="flex flex-col items-center cursor-pointer">
+              <Link href={getArtistHref(artist)} className="flex flex-col items-center cursor-pointer">
                 <div className="relative w-32 h-32 rounded-full overflow-hidden mb-4 border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-300 bg-white">
                   {artist.imageBase64 ? (
                     <Image 
