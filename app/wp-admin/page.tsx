@@ -167,6 +167,27 @@ export default function AdminDashboard() {
           fetchArtists(),
           fetchSettings()
         ]);
+
+        // Handle direct edit links from public pages
+        const params = new URLSearchParams(window.location.search);
+        const editSongId = params.get('editSongId');
+        const editArtistId = params.get('editArtistId');
+
+        if (editSongId) {
+          const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'));
+          const snapshot = await getDocs(q);
+          const song = snapshot.docs.find(d => d.id === editSongId);
+          if (song) {
+            handleEdit({ id: song.id, ...song.data() } as Song);
+          }
+        } else if (editArtistId) {
+          const q = query(collection(db, 'artists'), orderBy('name', 'asc'));
+          const snapshot = await getDocs(q);
+          const artist = snapshot.docs.find(d => d.id === editArtistId);
+          if (artist) {
+            handleEditArtist({ id: artist.id, ...artist.data() } as Artist);
+          }
+        }
       } catch (e) {
         console.error("Initialization failed", e);
       }

@@ -1,8 +1,11 @@
 "use client";
 
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-import { Download } from 'lucide-react';
+import { Download, Edit } from 'lucide-react';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 interface SongCardProps {
   id: string;
@@ -14,8 +17,17 @@ interface SongCardProps {
 }
 
 export function SongCard({ id, title, artist, views, imageBase64, type }: SongCardProps) {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAdmin(user?.email === "hilzmg70@gmail.com");
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
-    <Link href={`/song/${id}`} className="flex flex-col gap-3 group cursor-pointer min-w-0">
+    <Link href={`/song/${id}`} className="flex flex-col gap-3 group cursor-pointer min-w-0 relative">
       <div className="aspect-square bg-gray-100 rounded-xl border border-gray-200 overflow-hidden relative">
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-20">
           <div className="w-12 h-12 bg-[#39FF14] rounded-full flex items-center justify-center text-black font-black text-[10px] pl-[2px] transition hover:scale-105 shadow-xl"
@@ -30,6 +42,21 @@ export function SongCard({ id, title, artist, views, imageBase64, type }: SongCa
         {type === 'album' && (
           <div className="absolute top-2 left-2 z-30">
             <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">ALBUM</span>
+          </div>
+        )}
+
+        {isAdmin && (
+          <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-30">
+            <button 
+              className="w-8 h-8 bg-blue-600 text-white flex items-center justify-center rounded-lg hover:bg-blue-700 transition"
+              title="Edit Post"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.href = `/wp-admin?editSongId=${id}`;
+              }}
+            >
+              <Edit size={14} />
+            </button>
           </div>
         )}
 

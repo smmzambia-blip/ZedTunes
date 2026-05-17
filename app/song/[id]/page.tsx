@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Download, Heart, Play, Music, Layers, Clock, TrendingUp } from "lucide-react";
-import { db } from "@/lib/firebase";
+import { Download, Heart, Play, Music, Layers, Clock, TrendingUp, Edit } from "lucide-react";
+import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
+import Link from "next/link";
 
 interface Song {
   id: string;
@@ -20,8 +22,13 @@ interface Song {
 export default function SongPage({ params }: { params: { id: string } }) {
   const [song, setSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
 
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
     const fetchSong = async () => {
       try {
         const docRef = doc(db, 'songs', params.id);
@@ -38,6 +45,8 @@ export default function SongPage({ params }: { params: { id: string } }) {
       }
     };
     fetchSong();
+
+    return () => unsubscribe();
   }, [params.id]);
 
   if (loading) {
@@ -61,9 +70,20 @@ export default function SongPage({ params }: { params: { id: string } }) {
   }
 
   const isAlbum = song.type === 'album';
+  const isAdmin = user?.email === "hilzmg70@gmail.com";
 
   return (
     <div className="max-w-5xl mx-auto py-12 px-4 sm:px-8">
+      {isAdmin && (
+        <div className="mb-6 flex justify-end">
+          <Link 
+            href={`/wp-admin?editSongId=${song.id}`}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-blue-700 transition flex items-center gap-2"
+          >
+            <Edit size={16} /> Edit Post
+          </Link>
+        </div>
+      )}
       <div className="flex flex-col md:flex-row gap-12 items-start mb-16">
         <div className="w-full md:w-80 aspect-square bg-gray-100 rounded-3xl shadow-2xl shadow-black/10 overflow-hidden flex-shrink-0 relative group">
           {song.imageBase64 ? (

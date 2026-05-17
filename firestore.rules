@@ -42,14 +42,14 @@ service cloud.firestore {
              (!('description' in data) || (data.description is string && data.description.size() <= 5000)) &&
              (!('tracks' in data) || (data.tracks is list && data.tracks.size() <= 50)) &&
              (!('views' in data) || (data.views is string)) &&
-             (!('createdAt' in data) || (data.createdAt == request.time));
+             (!('createdAt' in data) || (data.createdAt == request.time || (resource != null && data.createdAt == resource.data.createdAt)));
     }
 
     function isValidArtist(data) {
       return data.name is string && data.name.size() <= 200 &&
              (!('bio' in data) || (data.bio is string && data.bio.size() <= 5000)) &&
              (!('imageBase64' in data) || (data.imageBase64 is string && data.imageBase64.size() <= 700000)) &&
-             (!('createdAt' in data) || (data.createdAt == request.time));
+             (!('createdAt' in data) || (data.createdAt == request.time || (resource != null && data.createdAt == resource.data.createdAt)));
     }
 
     function isValidSettings(data) {

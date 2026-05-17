@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { Users } from 'lucide-react';
+import { Users, Edit } from 'lucide-react';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import Link from 'next/link';
 
 interface Artist {
   id: string;
@@ -15,8 +17,13 @@ interface Artist {
 export default function ArtistsPage() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
 
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
     const fetchArtists = async () => {
       try {
         const q = query(collection(db, 'artists'), orderBy('name', 'asc'));
@@ -33,7 +40,11 @@ export default function ArtistsPage() {
       }
     };
     fetchArtists();
+
+    return () => unsubscribe();
   }, []);
+
+  const isAdmin = user?.email === "hilzmg70@gmail.com";
 
   return (
     <div className="py-8">
@@ -59,7 +70,16 @@ export default function ArtistsPage() {
       ) : artists.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8">
           {artists.map((artist) => (
-            <div key={artist.id} className="flex flex-col items-center group cursor-pointer">
+            <div key={artist.id} className="flex flex-col items-center group relative">
+              {isAdmin && (
+                <Link 
+                  href={`/wp-admin?editArtistId=${artist.id}`}
+                  className="absolute -top-2 -right-2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-lg"
+                  title="Edit Artist"
+                >
+                  <Edit size={14} />
+                </Link>
+              )}
               <div className="relative w-32 h-32 rounded-full overflow-hidden mb-4 border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-300">
                 {artist.imageBase64 ? (
                   <img src={artist.imageBase64} alt={artist.name} className="w-full h-full object-cover" />
