@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, SkipBack, SkipForward, Volume2, Heart, Shuffle, Repeat, Mic2, MonitorSpeaker } from 'lucide-react';
+import { Play, SkipBack, SkipForward, Volume2, Heart, Shuffle, Repeat, Mic2, MonitorSpeaker, Download } from 'lucide-react';
 
 export function MusicPlayer() {
   return (
@@ -11,9 +11,14 @@ export function MusicPlayer() {
           <div className="text-sm font-bold text-gray-900 truncate">Tuleya Kuli Lesa</div>
           <div className="text-xs text-gray-500 truncate mt-0.5">Chef 187 • Bon Appetit</div>
         </div>
-        <button className="text-gray-400 hover:text-black transition hidden sm:block">
-          <Heart size={16} />
-        </button>
+        <div className="items-center gap-3 hidden sm:flex">
+          <button className="text-gray-400 hover:text-black transition" title="Save to Library">
+            <Heart size={16} />
+          </button>
+          <button className="text-gray-400 hover:text-black transition" title="Download MP3">
+            <Download size={16} />
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col items-center gap-2 max-w-xl w-full">

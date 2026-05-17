@@ -23,6 +23,7 @@ export default function Home() {
           <div className="flex flex-wrap gap-4">
             <button className="bg-white text-black px-6 md:px-8 py-3 rounded-full font-bold hover:bg-[#39FF14] transition-colors text-sm">Listen Now</button>
             <button className="bg-black/50 backdrop-blur-md border border-white/20 px-6 md:px-8 py-3 rounded-full font-bold hover:bg-black/70 text-white text-sm">Add to Playlist</button>
+            <button className="bg-blue-600/80 backdrop-blur-md border border-blue-400/30 px-6 md:px-8 py-3 rounded-full font-bold hover:bg-blue-600 text-white text-sm">Download</button>
           </div>
         </div>
       </div>
