@@ -2,15 +2,25 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { collection, addDoc, serverTimestamp, getDocs, orderBy, query } from 'firebase/firestore';
 import { Upload, Trash2, Edit, Plus, Users, Music, X, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
+
+interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  views?: string;
+  imageBase64?: string;
+}
 
 export default function AdminDashboard() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [songs, setSongs] = useState<Song[]>([]);
   const [uploadData, setUploadData] = useState({
     title: '',
     artist: '',
@@ -19,7 +29,22 @@ export default function AdminDashboard() {
     imageBase64: ''
   });
 
+  const fetchSongs = async () => {
+    try {
+      const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      const fetchedSongs: Song[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Song));
+      setSongs(fetchedSongs);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
+    fetchSongs();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
@@ -40,11 +65,20 @@ export default function AdminDashboard() {
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would normally save to Firestore: db.collection("songs").add(uploadData)
-    console.log("Uploading to Firestore...", uploadData);
-    alert("Post published successfully!");
-    setShowUploadModal(false);
-    setUploadData({ title: '', artist: '', archiveLink: '', type: 'regular', imageBase64: '' });
+    try {
+      await addDoc(collection(db, 'songs'), {
+        ...uploadData,
+        createdAt: serverTimestamp(),
+        views: '0'
+      });
+      alert("Post published successfully!");
+      setShowUploadModal(false);
+      setUploadData({ title: '', artist: '', archiveLink: '', type: 'regular', imageBase64: '' });
+      fetchSongs();
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      alert("Error publishing post");
+    }
   };
 
   if (loading) {
@@ -127,14 +161,14 @@ export default function AdminDashboard() {
           <h2 className="font-bold text-gray-900">Recent Posts</h2>
         </div>
         <div className="divide-y divide-gray-200">
-          {[
-            { id: 1, title: "Tuleya Kuli Lesa", artist: "Chef 187" },
-            { id: 2, title: "Aweah", artist: "Yo Maps" },
-            { id: 3, title: "Superman", artist: "Yo Maps" },
-          ].map(song => (
+          {songs.length > 0 ? songs.map(song => (
             <div key={song.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 flex-wrap gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gray-200 rounded object-cover"></div>
+                {song.imageBase64 ? (
+                  <img src={song.imageBase64} alt={song.title} className="w-12 h-12 rounded object-cover" />
+                ) : (
+                  <div className="w-12 h-12 bg-gray-200 rounded object-cover"></div>
+                )}
                 <div>
                   <div className="font-bold text-sm text-gray-900">{song.title}</div>
                   <div className="text-xs text-gray-500">{song.artist}</div>
@@ -149,7 +183,9 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </div>
-          ))}
+          )) : (
+            <div className="px-6 py-8 text-center text-gray-500">No posts found.</div>
+          )}
         </div>
       </div>
 

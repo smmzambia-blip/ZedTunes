@@ -1,16 +1,42 @@
+"use client";
+
+import { useState, useEffect } from 'react';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { SongCard } from '@/components/ui/song-card';
 
-const DUMMY_SONGS = [
-  { id: '1', title: 'Tuleya Kuli Lesa', artist: 'Chef 187', views: '1.2M' },
-  { id: '2', title: 'Aweah', artist: 'Yo Maps', views: '800K' },
-  { id: '3', title: 'Malaika', artist: 'Yo Maps', views: '2.5M' },
-  { id: '4', title: 'Extra Time', artist: 'Macky 2', views: '950K' },
-  { id: '5', title: 'Zambia Ku Chalo', artist: 'Cleo Ice Queen', views: '450K' },
-  { id: '6', title: 'Superman', artist: 'Yo Maps', views: '3.1M' },
-  { id: '7', title: 'Tuleya Kuli Lesa', artist: 'Chef 187', views: '1.9M' },
-];
+interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  views?: string;
+  imageBase64?: string;
+  [key: string]: unknown;
+}
 
 export default function Home() {
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSongs = async () => {
+      try {
+        const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'), limit(10));
+        const snapshot = await getDocs(q);
+        const fetchedSongs: Song[] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Song));
+        setSongs(fetchedSongs);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSongs();
+  }, []);
+
   return (
     <>
       <div className="relative rounded-3xl overflow-hidden aspect-[21/9] flex-shrink-0 bg-gradient-to-r from-emerald-100 to-white border border-gray-200 group min-h-[300px]">
@@ -34,9 +60,15 @@ export default function Home() {
           <a href="#" className="text-xs text-blue-600 font-bold uppercase hover:underline">View All</a>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {DUMMY_SONGS.slice(0, 5).map((song) => (
-            <SongCard key={song.id} {...song} />
-          ))}
+          {loading ? (
+            <div className="col-span-full py-10 text-center text-gray-500">Loading songs...</div>
+          ) : songs.length > 0 ? (
+            songs.slice(0, 5).map((song) => (
+              <SongCard key={song.id} {...song} />
+            ))
+          ) : (
+            <div className="col-span-full py-10 text-center text-gray-500">No songs found.</div>
+          )}
         </div>
       </div>
 
@@ -46,9 +78,15 @@ export default function Home() {
           <a href="#" className="text-xs text-blue-600 font-bold uppercase hover:underline">View All</a>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {[...DUMMY_SONGS].reverse().slice(0, 5).map((song) => (
-            <SongCard key={`latest-${song.id}`} {...song} />
-          ))}
+           {loading ? (
+            <div className="col-span-full py-10 text-center text-gray-500">Loading songs...</div>
+          ) : songs.length > 0 ? (
+            songs.slice(0, 5).map((song) => (
+              <SongCard key={`latest-${song.id}`} {...song} />
+            ))
+          ) : (
+             <div className="col-span-full py-10 text-center text-gray-500">No songs found.</div>
+          )}
         </div>
       </div>
     </>
