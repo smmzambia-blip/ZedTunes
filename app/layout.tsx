@@ -16,6 +16,9 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "ZedTunes",
   description: "Zambia's hottest music platform",
+  verification: {
+    google: "_04GK_zgHd1ozBiScxbR6ddB9hzSbdFIGb70TwMGTWo",
+  },
 };
 
 export default function RootLayout({
