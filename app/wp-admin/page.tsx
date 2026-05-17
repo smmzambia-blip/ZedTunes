@@ -56,9 +56,23 @@ export default function AdminDashboard() {
       <div className="max-w-2xl mx-auto py-24 text-center px-4">
         <h1 className="text-3xl font-bold mb-4 text-red-600">Access Denied</h1>
         <p className="text-gray-600 mb-8">You do not have permission to view this page. This area is restricted to administrators only.</p>
-        <Link href="/" className="bg-black text-white px-6 py-2 rounded-full font-medium hover:bg-gray-800 transition">
-          Return to Home
-        </Link>
+        <div className="flex justify-center gap-4">
+          <Link href="/" className="bg-gray-100 text-black px-6 py-2 rounded-full font-medium hover:bg-gray-200 transition">
+            Return to Home
+          </Link>
+          {!user && (
+            <button 
+              onClick={async () => {
+                const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth');
+                const provider = new GoogleAuthProvider();
+                signInWithPopup(auth, provider).catch(console.error);
+              }}
+              className="bg-blue-600 text-white px-6 py-2 rounded-full font-medium hover:bg-blue-700 transition"
+            >
+              Log In as Admin
+            </button>
+          )}
+        </div>
       </div>
     );
   }
