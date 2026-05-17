@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: '/wp-admin/',
     },
-    sitemap: 'https://zedtunes.com/sitemap.xml',
+    sitemap: 'https://zedtunez.vercel.app/sitemap.xml',
   };
 }
