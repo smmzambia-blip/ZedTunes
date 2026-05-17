@@ -1,71 +1,113 @@
-import { Heart, Activity, Music, Users, UploadCloud } from 'lucide-react';
+"use client";
+
+import { useState, useEffect } from 'react';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { Upload, Trash2, Edit, Plus, Users, Music } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AdminDashboard() {
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <div className="p-8 text-center">Loading...</div>;
+  }
+
+  if (!user || user.email !== "hilzmg70@gmail.com") {
+    return (
+      <div className="max-w-2xl mx-auto py-24 text-center px-4">
+        <h1 className="text-3xl font-bold mb-4 text-red-600">Access Denied</h1>
+        <p className="text-gray-600 mb-8">You do not have permission to view this page. This area is restricted to administrators only.</p>
+        <Link href="/" className="bg-black text-white px-6 py-2 rounded-full font-medium hover:bg-gray-800 transition">
+          Return to Home
+        </Link>
+      </div>
+    );
+  }
+
   return (
-    <div className="py-6 space-y-6 text-white max-w-7xl mx-auto">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <button className="bg-neonGreen text-black px-4 py-2 rounded-md font-bold flex items-center gap-2 hover:bg-green-400 transition">
-          <UploadCloud size={18} />
-          Upload Song
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Songs', value: '1,248', icon: <Music size={20} className="text-neonGreen" /> },
-          { label: 'Total Users', value: '45.2K', icon: <Users size={20} className="text-blue-400" /> },
-          { label: 'Total Streams', value: '8.4M', icon: <Activity size={20} className="text-pink-400" /> },
-          { label: 'Total Likes', value: '342K', icon: <Heart size={20} className="text-red-400" /> },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-gray-900 border border-gray-800 p-6 rounded-xl shadow-lg">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-400 font-medium">{stat.label}</p>
-              {stat.icon}
-            </div>
-            <p className="text-3xl font-extrabold">{stat.value}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden mt-8">
-        <div className="p-4 border-b border-gray-800 bg-black/20">
-          <h2 className="text-lg font-bold">Recent Uploads</h2>
+    <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight">Admin Dashboard</h1>
+          <p className="text-gray-500 mt-1">Welcome back, Admin ({user.email})</p>
         </div>
-        <table className="w-full text-left text-sm text-gray-400">
-          <thead className="bg-gray-800 text-xs uppercase text-gray-300">
-            <tr>
-              <th className="px-6 py-4">Song Name</th>
-              <th className="px-6 py-4">Artist</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4">Streams</th>
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              { id: 1, title: 'Lusaka Nights', artist: 'Chef 187', status: 'PUBLISHED', streams: '1.2M' },
-              { id: 2, title: 'Chalo', artist: 'Slapdee', status: 'PUBLISHED', streams: '800K' },
-              { id: 3, title: 'New Wave Mix', artist: 'DJ Mzenga', status: 'DRAFT', streams: '-' },
-            ].map((song) => (
-              <tr key={song.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                <td className="px-6 py-4 font-medium text-white">{song.title}</td>
-                <td className="px-6 py-4">{song.artist}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 text-xs rounded-full font-bold
-                    ${song.status === 'PUBLISHED' ? 'bg-green-500/10 text-green-400' : 'bg-yellow-500/10 text-yellow-500'}`}>
-                    {song.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">{song.streams}</td>
-                <td className="px-6 py-4 text-right">
-                  <button className="text-blue-400 hover:underline mr-4">Edit</button>
-                  <button className="text-red-400 hover:underline">Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="flex gap-4">
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-blue-700 transition flex items-center gap-2">
+            <Edit size={16} /> Edit Site
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2">
+           <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
+             <Upload size={20} />
+           </div>
+           <h3 className="font-bold text-gray-900">Upload Song</h3>
+           <p className="text-xs text-gray-500">Add new tracks to the platform</p>
+        </div>
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2">
+           <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-2">
+             <Plus size={20} />
+           </div>
+           <h3 className="font-bold text-gray-900">Add Album</h3>
+           <p className="text-xs text-gray-500">Create a new album collection</p>
+        </div>
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2">
+           <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mb-2">
+             <Users size={20} />
+           </div>
+           <h3 className="font-bold text-gray-900">Manage Artists</h3>
+           <p className="text-xs text-gray-500">Add or edit artist profiles</p>
+        </div>
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2">
+           <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 mb-2">
+             <Music size={20} />
+           </div>
+           <h3 className="font-bold text-gray-900">Manage Songs</h3>
+           <p className="text-xs text-gray-500">Edit or delete existing tracks</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <h2 className="font-bold text-gray-900">Recent Songs</h2>
+        </div>
+        <div className="divide-y divide-gray-200">
+          {[
+            { id: 1, title: "Tuleya Kuli Lesa", artist: "Chef 187" },
+            { id: 2, title: "Aweah", artist: "Yo Maps" },
+            { id: 3, title: "Superman", artist: "Yo Maps" },
+          ].map(song => (
+            <div key={song.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 flex-wrap gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gray-200 rounded object-cover"></div>
+                <div>
+                  <div className="font-bold text-sm text-gray-900">{song.title}</div>
+                  <div className="text-xs text-gray-500">{song.artist}</div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button className="p-2 text-gray-400 hover:text-blue-600 transition" title="Edit">
+                  <Edit size={16} />
+                </button>
+                <button className="p-2 text-gray-400 hover:text-red-600 transition" title="Delete">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
