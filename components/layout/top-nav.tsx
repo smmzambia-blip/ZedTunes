@@ -70,8 +70,8 @@ export function TopNav() {
               </button>
             </>
           ) : (
-            <button onClick={handleLogin} className="text-sm font-semibold text-gray-600 hover:text-black transition flex items-center gap-1 opacity-0 w-0 h-0 overflow-hidden" tabIndex={-1} aria-hidden="true" title="Hidden Login">
-              Login
+            <button onClick={handleLogin} className="text-sm font-bold text-black border border-gray-200 px-4 py-2 rounded-full hover:bg-gray-50 transition">
+              Admin Login
             </button>
           )}
         </div>

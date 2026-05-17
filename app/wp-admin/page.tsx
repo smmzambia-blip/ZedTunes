@@ -4,9 +4,44 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, getDocs, orderBy, query, setDoc, getDoc } from 'firebase/firestore';
 import { Upload, Trash2, Edit, Plus, Users, Music, X, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 interface Song {
   id: string;
@@ -70,7 +105,7 @@ export default function AdminDashboard() {
       } as Song));
       setSongs(fetchedSongs);
     } catch (e) {
-      console.error(e);
+      handleFirestoreError(e, OperationType.LIST, 'songs');
     }
   };
 
@@ -84,24 +119,47 @@ export default function AdminDashboard() {
       } as Artist));
       setArtists(fetchedArtists);
     } catch (e) {
-      console.error(e);
+      handleFirestoreError(e, OperationType.LIST, 'artists');
     }
   };
 
-  const handleSaveSettings = (e: React.FormEvent) => {
+  const fetchSettings = async () => {
+    try {
+      const docRef = doc(db, 'settings', 'site');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setSiteSettings({
+          siteName: data.siteName || 'ZedTunes',
+          siteBio: data.siteBio || "Zambia's hottest music platform"
+        });
+      }
+    } catch (e) {
+      console.warn("Failed to fetch settings, using defaults", e);
+    }
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('siteSettings', JSON.stringify(siteSettings));
-    alert("Site settings saved locally! (Note: This is demo logic for now)");
-    setShowSiteSettingsModal(false);
+    setIsSaving(true);
+    try {
+      await setDoc(doc(db, 'settings', 'site'), {
+        ...siteSettings,
+        updatedAt: serverTimestamp()
+      });
+      alert("Site settings updated successfully!");
+      setShowSiteSettingsModal(false);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, 'settings/site');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem('siteSettings');
-    if (saved) {
-      setSiteSettings(JSON.parse(saved));
-    }
     fetchSongs();
     fetchArtists();
+    fetchSettings();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
@@ -175,9 +233,7 @@ export default function AdminDashboard() {
       });
       fetchSongs();
     } catch (error) {
-      console.error("Error saving document: ", error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      alert("Error saving post: " + errorMessage);
+      handleFirestoreError(error, editingId ? OperationType.UPDATE : OperationType.CREATE, 'songs');
     } finally {
       setIsSaving(false);
     }
@@ -204,9 +260,7 @@ export default function AdminDashboard() {
       setArtistData({ name: '', bio: '', imageBase64: '' });
       fetchArtists();
     } catch (error) {
-      console.error("Error saving artist: ", error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      alert("Error saving artist: " + errorMessage);
+      handleFirestoreError(error, editingArtistId ? OperationType.UPDATE : OperationType.CREATE, 'artists');
     } finally {
       setIsSaving(false);
     }
@@ -242,8 +296,7 @@ export default function AdminDashboard() {
         await deleteDoc(doc(db, 'songs', id));
         fetchSongs();
       } catch (e) {
-        console.error("Error deleting document:", e);
-        alert("Failed to delete post.");
+        handleFirestoreError(e, OperationType.DELETE, `songs/${id}`);
       }
     }
   };
@@ -254,8 +307,7 @@ export default function AdminDashboard() {
         await deleteDoc(doc(db, 'artists', id));
         fetchArtists();
       } catch (e) {
-        console.error("Error deleting artist:", e);
-        alert("Failed to delete artist.");
+        handleFirestoreError(e, OperationType.DELETE, `artists/${id}`);
       }
     }
   };

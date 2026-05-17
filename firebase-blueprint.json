@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "Song": {
+      "title": "Song",
+      "description": "A musical track or album post",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the song or album" },
+        "artist": { "type": "string", "description": "The name of the artist" },
+        "archiveLink": { "type": "string", "description": "Link to the MP3 file on Archive.org" },
+        "type": { "type": "string", "enum": ["regular", "trending", "album"], "description": "The type of post" },
+        "imageBase64": { "type": "string", "description": "Base64 encoded cover image" },
+        "description": { "type": "string", "description": "A short description of the track/album" },
+        "tracks": { 
+          "type": "array", 
+          "description": "List of tracks for an album",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "url": { "type": "string" }
+            }
+          }
+        },
+        "views": { "type": "string", "description": "Number of views" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "artist", "type"]
+    },
+    "Artist": {
+      "title": "Artist",
+      "description": "A musical artist profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Artist name" },
+        "bio": { "type": "string", "description": "Artist biography" },
+        "imageBase64": { "type": "string", "description": "Base64 encoded artist photo" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Site-wide configuration settings",
+      "type": "object",
+      "properties": {
+        "siteName": { "type": "string" },
+        "siteBio": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["siteName", "siteBio"]
+    }
+  },
+  "firestore": {
+    "songs": { "schema": "Song", "description": "Collection of music posts" },
+    "artists": { "schema": "Artist", "description": "Collection of artist profiles" },
+    "settings": { "schema": "Settings", "description": "Global site settings" }
+  }
+}
