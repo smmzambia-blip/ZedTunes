@@ -17,6 +17,7 @@ interface Song {
   type?: string;
   description?: string;
   archiveLink?: string;
+  tracks?: { title: string; url: string }[];
 }
 
 interface Artist {
@@ -42,7 +43,8 @@ export default function AdminDashboard() {
     archiveLink: '',
     type: 'regular',
     imageBase64: '',
-    description: ''
+    description: '',
+    tracks: [{ title: '', url: '' }]
   });
 
   const [artistData, setArtistData] = useState({
@@ -114,14 +116,20 @@ export default function AdminDashboard() {
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const dataToSave = {
+        ...uploadData,
+        // If not an album, we might not need tracks, but keeping it clean:
+        tracks: uploadData.type === 'album' ? uploadData.tracks : []
+      };
+
       if (editingId) {
         await updateDoc(doc(db, 'songs', editingId), {
-          ...uploadData
+          ...dataToSave
         });
         alert("Post updated successfully!");
       } else {
         await addDoc(collection(db, 'songs'), {
-          ...uploadData,
+          ...dataToSave,
           createdAt: serverTimestamp(),
           views: '0'
         });
@@ -129,7 +137,15 @@ export default function AdminDashboard() {
       }
       setShowUploadModal(false);
       setEditingId(null);
-      setUploadData({ title: '', artist: '', archiveLink: '', type: 'regular', imageBase64: '', description: '' });
+      setUploadData({ 
+        title: '', 
+        artist: '', 
+        archiveLink: '', 
+        type: 'regular', 
+        imageBase64: '', 
+        description: '',
+        tracks: [{ title: '', url: '' }]
+      });
       fetchSongs();
     } catch (error) {
       console.error("Error saving document: ", error);
@@ -169,7 +185,8 @@ export default function AdminDashboard() {
       archiveLink: song.archiveLink || '',
       type: song.type || 'regular',
       imageBase64: song.imageBase64 || '',
-      description: song.description || ''
+      description: song.description || '',
+      tracks: song.tracks || [{ title: '', url: '' }]
     });
     setEditingId(song.id);
     setShowUploadModal(true);
@@ -257,7 +274,7 @@ export default function AdminDashboard() {
         <button 
           onClick={() => {
             setEditingId(null);
-            setUploadData({ title: '', artist: '', archiveLink: '', type: 'regular', imageBase64: '', description: '' });
+            setUploadData({ title: '', artist: '', archiveLink: '', type: 'regular', imageBase64: '', description: '', tracks: [{ title: '', url: '' }] });
             setShowUploadModal(true);
           }} 
           className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left"
@@ -271,7 +288,7 @@ export default function AdminDashboard() {
         <button 
           onClick={() => {
             setEditingId(null);
-            setUploadData({ title: '', artist: '', archiveLink: '', type: 'album', imageBase64: '', description: '' });
+            setUploadData({ title: '', artist: '', archiveLink: '', type: 'album', imageBase64: '', description: '', tracks: [{ title: '', url: '' }] });
             setShowUploadModal(true);
           }}
           className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left"
@@ -489,19 +506,8 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Archive.org MP3 Link</label>
-                <input 
-                  type="url" required
-                  value={uploadData.archiveLink}
-                  onChange={(e) => setUploadData(prev => ({ ...prev, archiveLink: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-black focus:ring-1 focus:ring-black"
-                  placeholder="https://archive.org/download/..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Cover Image (Upload)</label>
+              <div className="pt-4 border-t border-gray-100">
+                <label className="block text-sm font-bold text-gray-700 mb-3">Cover Image (Upload)</label>
                 <div className="flex items-center gap-4">
                   {uploadData.imageBase64 ? (
                     <img src={uploadData.imageBase64} alt="Preview" className="w-16 h-16 rounded object-cover border border-gray-200" />
@@ -517,6 +523,86 @@ export default function AdminDashboard() {
                   />
                 </div>
               </div>
+
+              {uploadData.type === 'album' && (
+                <div className="pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-sm font-bold text-gray-700">Album Tracks</label>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        if (uploadData.tracks.length < 20) {
+                          setUploadData(prev => ({
+                            ...prev,
+                            tracks: [...prev.tracks, { title: '', url: '' }]
+                          }));
+                        }
+                      }}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    >
+                      <Plus size={14} /> Add Track
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {uploadData.tracks.map((track, idx) => (
+                      <div key={idx} className="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-bold text-gray-400">Track {idx + 1}</span>
+                          {uploadData.tracks.length > 1 && (
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                setUploadData(prev => ({
+                                  ...prev,
+                                  tracks: prev.tracks.filter((_, i) => i !== idx)
+                                }));
+                              }}
+                              className="text-gray-400 hover:text-red-500"
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
+                        </div>
+                        <input 
+                          type="text" required
+                          value={track.title}
+                          onChange={(e) => {
+                            const newTracks = [...uploadData.tracks];
+                            newTracks[idx].title = e.target.value;
+                            setUploadData(prev => ({ ...prev, tracks: newTracks }));
+                          }}
+                          className="w-full text-xs border border-gray-300 rounded p-2 outline-none focus:border-black"
+                          placeholder="Track Title (e.g. 01. Song Name)"
+                        />
+                        <input 
+                          type="url" required
+                          value={track.url}
+                          onChange={(e) => {
+                            const newTracks = [...uploadData.tracks];
+                            newTracks[idx].url = e.target.value;
+                            setUploadData(prev => ({ ...prev, tracks: newTracks }));
+                          }}
+                          className="w-full text-xs border border-gray-300 rounded p-2 outline-none focus:border-black"
+                          placeholder="Archive.org MP3 URL"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {uploadData.type !== 'album' && (
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Archive.org MP3 Link</label>
+                  <input 
+                    type="url" required
+                    value={uploadData.archiveLink}
+                    onChange={(e) => setUploadData(prev => ({ ...prev, archiveLink: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-black focus:ring-1 focus:ring-black"
+                    placeholder="https://archive.org/download/..."
+                  />
+                </div>
+              )}
 
               <div className="flex justify-end gap-3 mt-4">
                 <button type="button" onClick={() => setShowUploadModal(false)} className="px-5 py-2.5 rounded-lg font-bold text-gray-600 hover:bg-gray-100">Cancel</button>

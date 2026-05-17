@@ -9,9 +9,11 @@ interface SongCardProps {
   title: string;
   artist: string;
   views?: string;
+  imageBase64?: string;
+  type?: string;
 }
 
-export function SongCard({ id, title, artist, views }: SongCardProps) {
+export function SongCard({ id, title, artist, views, imageBase64, type }: SongCardProps) {
   return (
     <Link href={`/song/${id}`} className="flex flex-col gap-3 group cursor-pointer min-w-0">
       <div className="aspect-square bg-gray-100 rounded-xl border border-gray-200 overflow-hidden relative">
@@ -24,6 +26,13 @@ export function SongCard({ id, title, artist, views }: SongCardProps) {
             ▶
           </div>
         </div>
+        
+        {type === 'album' && (
+          <div className="absolute top-2 left-2 z-30">
+            <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">ALBUM</span>
+          </div>
+        )}
+
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-30">
           <button 
             className="w-8 h-8 bg-white/10 backdrop-blur text-white flex items-center justify-center rounded-full hover:bg-white/30 hover:scale-105 transition-all"
@@ -36,7 +45,16 @@ export function SongCard({ id, title, artist, views }: SongCardProps) {
             <Download size={14} />
           </button>
         </div>
-        <div className="h-full w-full bg-gradient-to-br from-gray-200 to-gray-300 z-0"></div>
+        
+        {imageBase64 ? (
+          <img 
+            src={imageBase64} 
+            alt={title} 
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-110" 
+          />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-gray-200 to-gray-300 z-0"></div>
+        )}
       </div>
       <div className="min-w-0">
         <div className="font-bold text-sm truncate text-gray-900 group-hover:text-blue-600 transition-colors">{title}</div>
