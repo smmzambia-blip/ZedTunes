@@ -1,12 +1,10 @@
 "use client";
 
-import { Play, Pause, SkipForward, SkipBack, Volume2, Heart, Shuffle, Repeat, Mic2, MonitorSpeaker } from 'lucide-react';
-import Image from 'next/image';
+import { Play, SkipBack, SkipForward, Volume2, Heart, Shuffle, Repeat, Mic2, MonitorSpeaker } from 'lucide-react';
 
 export function MusicPlayer() {
   return (
     <footer className="h-24 bg-black border-t border-white/10 px-4 sm:px-8 flex items-center justify-between z-50">
-      {/* Track Info */}
       <div className="flex items-center gap-4 w-72 min-w-0">
         <div className="w-14 h-14 bg-gradient-to-br from-emerald-600 to-black rounded-lg flex-shrink-0"></div>
         <div className="overflow-hidden hidden sm:block">
@@ -18,7 +16,6 @@ export function MusicPlayer() {
         </button>
       </div>
 
-      {/* Controls */}
       <div className="flex flex-col items-center gap-2 max-w-xl w-full">
         <div className="flex items-center gap-6">
           <button className="text-gray-400 hover:text-white transition hidden sm:block">
@@ -49,7 +46,6 @@ export function MusicPlayer() {
         </div>
       </div>
 
-      {/* Extra Controls */}
       <div className="flex items-center justify-end gap-4 w-72 hidden md:flex">
         <button className="text-gray-400 hover:text-white transition">
           <Mic2 size={16} />

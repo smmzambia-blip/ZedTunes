@@ -1,10 +1,8 @@
-import type { GetServerSideProps } from 'next';
 import { SongCard } from '@/components/ui/song-card';
 
-// Mock data (in a real app, fetch from Prisma via a Server Component or Server Action)
 const DUMMY_SONGS = [
-  { id: '1', title: 'Lusaka Nights', artist: 'Chef 187', views: '1.2M' },
-  { id: '2', title: 'Chalo', artist: 'Slapdee', views: '800K' },
+  { id: '1', title: 'Tuleya Kuli Lesa', artist: 'Chef 187', views: '1.2M' },
+  { id: '2', title: 'Aweah', artist: 'Yo Maps', views: '800K' },
   { id: '3', title: 'Malaika', artist: 'Yo Maps', views: '2.5M' },
   { id: '4', title: 'Extra Time', artist: 'Macky 2', views: '950K' },
   { id: '5', title: 'Zambia Ku Chalo', artist: 'Cleo Ice Queen', views: '450K' },
@@ -15,7 +13,6 @@ const DUMMY_SONGS = [
 export default function Home() {
   return (
     <>
-      {/* Hero Banner */}
       <div className="relative rounded-3xl overflow-hidden aspect-[21/9] flex-shrink-0 bg-gradient-to-r from-emerald-900 to-black border border-white/10 group min-h-[300px]">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1493225255756-d9584f8606e9?auto=format&fit=crop&q=80&w=1000')] bg-cover opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
@@ -30,7 +27,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Trending Section */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">Trending Now</h2>
@@ -43,7 +39,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Latest Uploads Section */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">Latest Uploads</h2>

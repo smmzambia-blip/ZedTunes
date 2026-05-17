@@ -1,17 +1,15 @@
 "use client";
 
 import Link from 'next/link';
-import Image from 'next/image';
 
 interface SongCardProps {
   id: string;
   title: string;
   artist: string;
-  coverImage?: string;
   views?: string;
 }
 
-export function SongCard({ id, title, artist, coverImage, views }: SongCardProps) {
+export function SongCard({ id, title, artist, views }: SongCardProps) {
   return (
     <Link href={`/song/${id}`} className="flex flex-col gap-3 group cursor-pointer min-w-0">
       <div className="aspect-square bg-white/5 rounded-xl border border-white/10 overflow-hidden relative">
@@ -24,24 +22,13 @@ export function SongCard({ id, title, artist, coverImage, views }: SongCardProps
             ▶
           </div>
         </div>
-        {coverImage ? (
-          <Image 
-            src={coverImage} 
-            alt={title} 
-            fill
-            className="object-cover group-hover:scale-105 transition duration-500 z-10"
-          />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-emerald-800 to-black/80 z-0"></div>
-        )}
+        <div className="h-full w-full bg-gradient-to-br from-emerald-800 to-black/80 z-0"></div>
       </div>
       <div className="min-w-0">
         <div className="font-bold text-sm truncate text-white">{title}</div>
         <div className="text-xs text-gray-500 truncate mt-0.5">{artist}</div>
+        {views && <div className="text-[10px] text-gray-500 mt-1">{views} streams</div>}
       </div>
     </Link>
   );
 }
-
-// Simple export to prevent Next.js build errors for empty default exports
-export default SongCard;
