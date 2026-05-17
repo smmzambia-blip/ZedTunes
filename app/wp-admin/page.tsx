@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { collection, addDoc, serverTimestamp, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, getDocs, orderBy, query } from 'firebase/firestore';
 import { Upload, Trash2, Edit, Plus, Users, Music, X, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 
@@ -14,19 +14,25 @@ interface Song {
   artist: string;
   views?: string;
   imageBase64?: string;
+  type?: string;
+  description?: string;
+  archiveLink?: string;
 }
 
 export default function AdminDashboard() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'posts' | 'artists' | 'albums'>('posts');
   const [songs, setSongs] = useState<Song[]>([]);
   const [uploadData, setUploadData] = useState({
     title: '',
     artist: '',
     archiveLink: '',
     type: 'regular',
-    imageBase64: ''
+    imageBase64: '',
+    description: ''
   });
 
   const fetchSongs = async () => {
@@ -66,18 +72,51 @@ export default function AdminDashboard() {
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'songs'), {
-        ...uploadData,
-        createdAt: serverTimestamp(),
-        views: '0'
-      });
-      alert("Post published successfully!");
+      if (editingId) {
+        await updateDoc(doc(db, 'songs', editingId), {
+          ...uploadData
+        });
+        alert("Post updated successfully!");
+      } else {
+        await addDoc(collection(db, 'songs'), {
+          ...uploadData,
+          createdAt: serverTimestamp(),
+          views: '0'
+        });
+        alert("Post published successfully!");
+      }
       setShowUploadModal(false);
-      setUploadData({ title: '', artist: '', archiveLink: '', type: 'regular', imageBase64: '' });
+      setEditingId(null);
+      setUploadData({ title: '', artist: '', archiveLink: '', type: 'regular', imageBase64: '', description: '' });
       fetchSongs();
     } catch (error) {
-      console.error("Error adding document: ", error);
-      alert("Error publishing post");
+      console.error("Error saving document: ", error);
+      alert("Error saving post");
+    }
+  };
+
+  const handleEdit = (song: Song) => {
+    setUploadData({
+      title: song.title || '',
+      artist: song.artist || '',
+      archiveLink: song.archiveLink || '',
+      type: song.type || 'regular',
+      imageBase64: song.imageBase64 || '',
+      description: song.description || ''
+    });
+    setEditingId(song.id);
+    setShowUploadModal(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Are you sure you want to delete this track?")) {
+      try {
+        await deleteDoc(doc(db, 'songs', id));
+        fetchSongs();
+      } catch (e) {
+        console.error("Error deleting document:", e);
+        alert("Failed to delete post.");
+      }
     }
   };
 
@@ -126,42 +165,64 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <button onClick={() => setShowUploadModal(true)} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left">
+        <button 
+          onClick={() => {
+            setEditingId(null);
+            setUploadData({ title: '', artist: '', archiveLink: '', type: 'regular', imageBase64: '', description: '' });
+            setShowUploadModal(true);
+          }} 
+          className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left"
+        >
            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
              <Upload size={20} />
            </div>
            <h3 className="font-bold text-gray-900">Publish Post</h3>
            <p className="text-xs text-gray-500">Upload song or album</p>
         </button>
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2">
+        <button 
+          onClick={() => {
+            setEditingId(null);
+            setUploadData({ title: '', artist: '', archiveLink: '', type: 'album', imageBase64: '', description: '' });
+            setShowUploadModal(true);
+          }}
+          className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left"
+        >
            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-2">
              <Plus size={20} />
            </div>
            <h3 className="font-bold text-gray-900">Add Album</h3>
            <p className="text-xs text-gray-500">Create a new album collection</p>
-        </div>
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2">
+        </button>
+        <button 
+          onClick={() => setActiveTab('artists')}
+          className={`bg-white p-6 rounded-xl border ${activeTab === 'artists' ? 'border-black ring-1 ring-black' : 'border-gray-200'} shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left`}
+        >
            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mb-2">
              <Users size={20} />
            </div>
            <h3 className="font-bold text-gray-900">Manage Artists</h3>
            <p className="text-xs text-gray-500">Add or edit artist profiles</p>
-        </div>
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2">
+        </button>
+        <button 
+          onClick={() => setActiveTab('posts')}
+          className={`bg-white p-6 rounded-xl border ${activeTab === 'posts' ? 'border-black ring-1 ring-black' : 'border-gray-200'} shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left`}
+        >
            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 mb-2">
              <Music size={20} />
            </div>
            <h3 className="font-bold text-gray-900">Manage Songs</h3>
            <p className="text-xs text-gray-500">Edit or delete existing tracks</p>
-        </div>
+        </button>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="font-bold text-gray-900">Recent Posts</h2>
+          <h2 className="font-bold text-gray-900">{activeTab === 'artists' ? 'Artists' : 'Recent Posts'}</h2>
         </div>
         <div className="divide-y divide-gray-200">
-          {songs.length > 0 ? songs.map(song => (
+          {activeTab === 'artists' ? (
+            <div className="px-6 py-8 text-center text-gray-500">Artist management coming soon...</div>
+          ) : songs.length > 0 ? songs.map(song => (
             <div key={song.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 flex-wrap gap-4">
               <div className="flex items-center gap-4">
                 {song.imageBase64 ? (
@@ -171,14 +232,14 @@ export default function AdminDashboard() {
                 )}
                 <div>
                   <div className="font-bold text-sm text-gray-900">{song.title}</div>
-                  <div className="text-xs text-gray-500">{song.artist}</div>
+                  <div className="text-xs text-gray-500">{song.artist} • {song.type || 'regular'}</div>
                 </div>
               </div>
               <div className="flex gap-2">
-                <button className="p-2 text-gray-400 hover:text-blue-600 transition" title="Edit">
+                <button onClick={() => handleEdit(song)} className="p-2 text-gray-400 hover:text-blue-600 transition" title="Edit">
                   <Edit size={16} />
                 </button>
-                <button className="p-2 text-gray-400 hover:text-red-600 transition" title="Delete">
+                <button onClick={() => handleDelete(song.id)} className="p-2 text-gray-400 hover:text-red-600 transition" title="Delete">
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -199,7 +260,7 @@ export default function AdminDashboard() {
                 <X size={24} />
               </button>
             </div>
-            <form onSubmit={handleUploadSubmit} className="p-6 flex flex-col gap-5">
+            <form onSubmit={handleUploadSubmit} className="p-6 flex flex-col gap-5 max-h-[80vh] overflow-y-auto">
               
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Post Type</label>
@@ -233,6 +294,17 @@ export default function AdminDashboard() {
                   onChange={(e) => setUploadData(prev => ({ ...prev, artist: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-black focus:ring-1 focus:ring-black"
                   placeholder="Artist Name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Description</label>
+                <textarea 
+                  rows={3}
+                  value={uploadData.description}
+                  onChange={(e) => setUploadData(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-black focus:ring-1 focus:ring-black"
+                  placeholder="Tell us about this post..."
                 />
               </div>
 
