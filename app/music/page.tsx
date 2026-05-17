@@ -74,7 +74,7 @@ export default function MusicPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8 gap-4">
           {[...Array(14)].map((_, i) => (
             <div key={i} className="animate-pulse flex flex-col gap-3">
               <div className="bg-gray-100 rounded-2xl aspect-square"></div>
@@ -85,7 +85,7 @@ export default function MusicPage() {
       ) : songs.length > 0 ? (
         <>
           <h3 className="text-xl font-black mb-8 tracking-tight uppercase">{activeCategory === 'All' ? 'All Releases' : activeCategory}</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8 gap-4">
             {songs.map((song) => (
               <SongCard key={song.id} {...song} />
             ))}

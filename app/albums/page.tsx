@@ -51,13 +51,13 @@ export default function AlbumsPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8 gap-4">
           {[...Array(14)].map((_, i) => (
             <div key={i} className="animate-pulse bg-gray-100 rounded-2xl aspect-square"></div>
           ))}
         </div>
       ) : albums.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8 gap-4">
           {albums.map((album) => (
             <SongCard key={album.id} {...album} />
           ))}
