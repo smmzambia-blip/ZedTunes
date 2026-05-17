@@ -12,7 +12,7 @@ interface Song {
   artist: string;
   views?: string;
   imageBase64?: string;
-  type?: string;
+  category?: string;
 }
 
 export default function MusicPage() {
@@ -23,7 +23,7 @@ export default function MusicPage() {
     const fetchSongs = async () => {
       try {
         // Fetch all that are not albums
-        const q = query(collection(db, 'songs'), where('type', '!=', 'album'), orderBy('type'), orderBy('createdAt', 'desc'));
+        const q = query(collection(db, 'songs'), where('category', '!=', 'Album'), orderBy('category'), orderBy('createdAt', 'desc'));
         const snapshot = await getDocs(q);
         const fetchedSongs: Song[] = snapshot.docs.map(doc => ({
           id: doc.id,

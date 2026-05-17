@@ -12,7 +12,7 @@ interface Song {
   artist: string;
   views?: string;
   imageBase64?: string;
-  type?: string;
+  category?: string;
 }
 
 export default function AlbumsPage() {
@@ -22,7 +22,7 @@ export default function AlbumsPage() {
   useEffect(() => {
     const fetchAlbums = async () => {
       try {
-        const q = query(collection(db, 'songs'), where('type', '==', 'album'), orderBy('createdAt', 'desc'));
+        const q = query(collection(db, 'songs'), where('category', '==', 'Album'), orderBy('createdAt', 'desc'));
         const snapshot = await getDocs(q);
         const fetchedAlbums: Song[] = snapshot.docs.map(doc => ({
           id: doc.id,

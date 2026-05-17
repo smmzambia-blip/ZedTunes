@@ -49,7 +49,7 @@ interface Song {
   artist: string;
   views?: string;
   imageBase64?: string;
-  type?: string;
+  category: string;
   description?: string;
   archiveLink?: string;
   tracks?: { title: string; url: string }[];
@@ -78,7 +78,7 @@ export default function AdminDashboard() {
     title: '',
     artist: '',
     archiveLink: '',
-    type: 'regular',
+    category: 'Single',
     imageBase64: '',
     description: '',
     tracks: [{ title: '', url: '' }]
@@ -240,7 +240,7 @@ export default function AdminDashboard() {
       const dataToSave = {
         ...uploadData,
         // If not an album, we might not need tracks, but keeping it clean:
-        tracks: uploadData.type === 'album' ? uploadData.tracks : []
+        tracks: uploadData.category === 'Album' ? uploadData.tracks : []
       };
 
       if (editingId) {
@@ -263,7 +263,7 @@ export default function AdminDashboard() {
         title: '', 
         artist: '', 
         archiveLink: '', 
-        type: 'regular', 
+        category: 'Single', 
         imageBase64: '', 
         description: '',
         tracks: [{ title: '', url: '' }]
@@ -308,7 +308,7 @@ export default function AdminDashboard() {
       title: song.title || '',
       artist: song.artist || '',
       archiveLink: song.archiveLink || '',
-      type: song.type || 'regular',
+      category: song.category || 'Single',
       imageBase64: song.imageBase64 || '',
       description: song.description || '',
       tracks: song.tracks || [{ title: '', url: '' }]
@@ -403,11 +403,11 @@ export default function AdminDashboard() {
         <button 
           onClick={() => {
             setEditingId(null);
-            setUploadData({ title: '', artist: '', archiveLink: '', type: 'regular', imageBase64: '', description: '', tracks: [{ title: '', url: '' }] });
+            setUploadData({ title: '', artist: '', archiveLink: '', category: 'Single', imageBase64: '', description: '', tracks: [{ title: '', url: '' }] });
             setActiveTab('posts');
             setShowUploadModal(true);
           }} 
-          className={`bg-white p-6 rounded-xl border ${activeTab === 'posts' && uploadData.type === 'regular' ? 'border-black ring-1 ring-black' : 'border-gray-200'} shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left`}
+          className={`bg-white p-6 rounded-xl border ${activeTab === 'posts' && uploadData.category === 'Single' ? 'border-black ring-1 ring-black' : 'border-gray-200'} shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left`}
         >
            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
              <Upload size={20} />
@@ -418,11 +418,11 @@ export default function AdminDashboard() {
         <button 
           onClick={() => {
             setEditingId(null);
-            setUploadData({ title: '', artist: '', archiveLink: '', type: 'album', imageBase64: '', description: '', tracks: [{ title: '', url: '' }] });
+            setUploadData({ title: '', artist: '', archiveLink: '', category: 'Album', imageBase64: '', description: '', tracks: [{ title: '', url: '' }] });
             setActiveTab('posts');
             setShowUploadModal(true);
           }}
-          className={`bg-white p-6 rounded-xl border ${activeTab === 'posts' && uploadData.type === 'album' ? 'border-black ring-1 ring-black' : 'border-gray-200'} shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left`}
+          className={`bg-white p-6 rounded-xl border ${activeTab === 'posts' && uploadData.category === 'Album' ? 'border-black ring-1 ring-black' : 'border-gray-200'} shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left`}
         >
            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-2">
              <Plus size={20} />
@@ -500,7 +500,7 @@ export default function AdminDashboard() {
                 )}
                 <div>
                   <div className="font-bold text-sm text-gray-900">{song.title}</div>
-                  <div className="text-xs text-gray-500">{song.artist} • {song.type || 'regular'}</div>
+                  <div className="text-xs text-gray-500">{song.artist} • {song.category}</div>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -631,15 +631,21 @@ export default function AdminDashboard() {
             <form onSubmit={handleUploadSubmit} className="p-6 flex flex-col gap-5 max-h-[80vh] overflow-y-auto">
               
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Post Type</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Category</label>
                 <select 
-                  value={uploadData.type}
-                  onChange={(e) => setUploadData(prev => ({ ...prev, type: e.target.value }))}
+                  value={uploadData.category}
+                  onChange={(e) => setUploadData(prev => ({ ...prev, category: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-black focus:ring-1 focus:ring-black"
                 >
-                  <option value="regular">Regular Song</option>
-                  <option value="trending">Trending Post</option>
-                  <option value="album">Album</option>
+                  <option value="Single">Single</option>
+                  <option value="Album">Album</option>
+                  <option value="Gospel">Gospel</option>
+                  <option value="Hip Hop">Hip Hop</option>
+                  <option value="Zambian">Zambian</option>
+                  <option value="RnB">RnB</option>
+                  <option value="Dancehall">Dancehall</option>
+                  <option value="Afrobeat">Afrobeat</option>
+                  <option value="Kalindula">Kalindula</option>
                 </select>
               </div>
 
@@ -694,7 +700,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {uploadData.type === 'album' && (
+              {uploadData.category === 'Album' && (
                 <div className="pt-4 border-t border-gray-100">
                   <div className="flex items-center justify-between mb-3">
                     <label className="block text-sm font-bold text-gray-700">Album Tracks</label>
@@ -761,7 +767,7 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              {uploadData.type !== 'album' && (
+              {uploadData.category !== 'Album' && (
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1">Archive.org MP3 Link</label>
                   <input 

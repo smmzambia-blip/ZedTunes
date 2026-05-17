@@ -8,7 +8,7 @@
         "title": { "type": "string", "description": "The title of the song or album" },
         "artist": { "type": "string", "description": "The name of the artist" },
         "archiveLink": { "type": "string", "description": "Link to the MP3 file on Archive.org" },
-        "type": { "type": "string", "enum": ["regular", "trending", "album"], "description": "The type of post" },
+        "category": { "type": "string", "enum": ["Single", "Album", "Gospel", "Hip Hop", "Zambian", "RnB", "Dancehall", "Afrobeat", "Kalindula"], "description": "The category of the post" },
         "imageBase64": { "type": "string", "description": "Base64 encoded cover image" },
         "description": { "type": "string", "description": "A short description of the track/album" },
         "tracks": { 
@@ -25,7 +25,7 @@
         "views": { "type": "string", "description": "Number of views" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["title", "artist", "type"]
+      "required": ["title", "artist", "category"]
     },
     "Artist": {
       "title": "Artist",

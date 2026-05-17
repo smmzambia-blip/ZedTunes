@@ -13,10 +13,10 @@ interface SongCardProps {
   artist: string;
   views?: string;
   imageBase64?: string;
-  type?: string;
+  category?: string;
 }
 
-export function SongCard({ id, title, artist, imageBase64, type }: SongCardProps) {
+export function SongCard({ id, title, artist, imageBase64, category }: SongCardProps) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export function SongCard({ id, title, artist, imageBase64, type }: SongCardProps
           </div>
         </div>
         
-        {type === 'album' && (
+        {category === 'Album' && (
           <div className="absolute top-2 left-2 z-30">
             <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">ALBUM</span>
           </div>

@@ -11,7 +11,7 @@ interface Song {
   artist: string;
   views?: string;
   imageBase64?: string;
-  [key: string]: unknown;
+  category?: string;
 }
 
 export default function Home() {
@@ -94,7 +94,7 @@ export default function Home() {
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">Trending Now</h2>
+          <h2 className="text-xl font-bold">Hot Releases</h2>
           <a href="#" className="text-xs text-blue-600 font-bold uppercase hover:underline">View All</a>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">

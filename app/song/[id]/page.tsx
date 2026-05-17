@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Download, Heart, Play, Music, Layers, Clock, TrendingUp, Edit } from "lucide-react";
+import { Download, Heart, Play, Music, Layers, Clock, Edit } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
@@ -13,7 +13,7 @@ interface Song {
   artist: string;
   views?: string;
   imageBase64?: string;
-  type?: string;
+  category: string;
   description?: string;
   archiveLink?: string;
   tracks?: { title: string; url: string }[];
@@ -67,7 +67,7 @@ export default function SongPage({ params }: { params: { id: string } }) {
     );
   }
 
-  const isAlbum = song.type === 'album';
+  const isAlbum = song.category === 'Album';
   const isAdmin = user?.email === "hilzmg70@gmail.com";
 
   return (
@@ -101,13 +101,9 @@ export default function SongPage({ params }: { params: { id: string } }) {
         <div className="flex flex-col gap-6 w-full">
           <div>
             <div className="flex items-center gap-3 mb-4">
-              {isAlbum ? (
-                <span className="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full tracking-widest uppercase">Album</span>
-              ) : song.type === 'trending' ? (
-                <span className="bg-orange-500 text-white text-[10px] font-black px-3 py-1 rounded-full tracking-widest uppercase flex items-center gap-1"><TrendingUp size={10} /> Trending</span>
-              ) : (
-                <span className="bg-emerald-500 text-white text-[10px] font-black px-3 py-1 rounded-full tracking-widest uppercase">Single</span>
-              )}
+              <span className={`text-white text-[10px] font-black px-3 py-1 rounded-full tracking-widest uppercase ${isAlbum ? 'bg-blue-600' : 'bg-emerald-500'}`}>
+                {song.category}
+              </span>
               <span className="text-gray-400 text-xs font-bold flex items-center gap-1 tracking-tight">
                 <Clock size={12} /> {(new Date()).toLocaleDateString()}
               </span>
