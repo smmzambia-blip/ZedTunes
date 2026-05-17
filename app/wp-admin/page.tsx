@@ -19,13 +19,23 @@ interface Song {
   archiveLink?: string;
 }
 
+interface Artist {
+  id: string;
+  name: string;
+  bio: string;
+  imageBase64?: string;
+}
+
 export default function AdminDashboard() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showArtistModal, setShowArtistModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingArtistId, setEditingArtistId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'posts' | 'artists' | 'albums'>('posts');
   const [songs, setSongs] = useState<Song[]>([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [uploadData, setUploadData] = useState({
     title: '',
     artist: '',
@@ -33,6 +43,12 @@ export default function AdminDashboard() {
     type: 'regular',
     imageBase64: '',
     description: ''
+  });
+
+  const [artistData, setArtistData] = useState({
+    name: '',
+    bio: '',
+    imageBase64: ''
   });
 
   const fetchSongs = async () => {
@@ -49,8 +65,23 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchArtists = async () => {
+    try {
+      const q = query(collection(db, 'artists'), orderBy('name', 'asc'));
+      const snapshot = await getDocs(q);
+      const fetchedArtists: Artist[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Artist));
+      setArtists(fetchedArtists);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     fetchSongs();
+    fetchArtists();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
@@ -64,6 +95,17 @@ export default function AdminDashboard() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setUploadData(prev => ({ ...prev, imageBase64: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleArtistImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setArtistData(prev => ({ ...prev, imageBase64: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
@@ -95,6 +137,31 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleArtistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingArtistId) {
+        await updateDoc(doc(db, 'artists', editingArtistId), {
+          ...artistData
+        });
+        alert("Artist updated successfully!");
+      } else {
+        await addDoc(collection(db, 'artists'), {
+          ...artistData,
+          createdAt: serverTimestamp()
+        });
+        alert("Artist added successfully!");
+      }
+      setShowArtistModal(false);
+      setEditingArtistId(null);
+      setArtistData({ name: '', bio: '', imageBase64: '' });
+      fetchArtists();
+    } catch (error) {
+      console.error("Error saving artist: ", error);
+      alert("Error saving artist");
+    }
+  };
+
   const handleEdit = (song: Song) => {
     setUploadData({
       title: song.title || '',
@@ -108,6 +175,16 @@ export default function AdminDashboard() {
     setShowUploadModal(true);
   };
 
+  const handleEditArtist = (artist: Artist) => {
+    setArtistData({
+      name: artist.name || '',
+      bio: artist.bio || '',
+      imageBase64: artist.imageBase64 || ''
+    });
+    setEditingArtistId(artist.id);
+    setShowArtistModal(true);
+  };
+
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this track?")) {
       try {
@@ -116,6 +193,18 @@ export default function AdminDashboard() {
       } catch (e) {
         console.error("Error deleting document:", e);
         alert("Failed to delete post.");
+      }
+    }
+  };
+
+  const handleDeleteArtist = async (id: string) => {
+    if (confirm("Are you sure you want to delete this artist?")) {
+      try {
+        await deleteDoc(doc(db, 'artists', id));
+        fetchArtists();
+      } catch (e) {
+        console.error("Error deleting artist:", e);
+        alert("Failed to delete artist.");
       }
     }
   };
@@ -194,7 +283,11 @@ export default function AdminDashboard() {
            <p className="text-xs text-gray-500">Create a new album collection</p>
         </button>
         <button 
-          onClick={() => setActiveTab('artists')}
+          onClick={() => {
+            setEditingArtistId(null);
+            setArtistData({ name: '', bio: '', imageBase64: '' });
+            setShowArtistModal(true);
+          }}
           className={`bg-white p-6 rounded-xl border ${activeTab === 'artists' ? 'border-black ring-1 ring-black' : 'border-gray-200'} shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left`}
         >
            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 mb-2">
@@ -221,7 +314,33 @@ export default function AdminDashboard() {
         </div>
         <div className="divide-y divide-gray-200">
           {activeTab === 'artists' ? (
-            <div className="px-6 py-8 text-center text-gray-500">Artist management coming soon...</div>
+            artists.length > 0 ? artists.map(artist => (
+              <div key={artist.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 flex-wrap gap-4">
+                <div className="flex items-center gap-4">
+                  {artist.imageBase64 ? (
+                    <img src={artist.imageBase64} alt={artist.name} className="w-12 h-12 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-200 rounded-full object-cover flex items-center justify-center">
+                      <Users size={16} className="text-gray-400" />
+                    </div>
+                  )}
+                  <div>
+                    <div className="font-bold text-sm text-gray-900">{artist.name}</div>
+                    <div className="text-xs text-gray-500 line-clamp-1 max-w-md">{artist.bio || 'No bio provided'}</div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handleEditArtist(artist)} className="p-2 text-gray-400 hover:text-blue-600 transition" title="Edit">
+                    <Edit size={16} />
+                  </button>
+                  <button onClick={() => handleDeleteArtist(artist.id)} className="p-2 text-gray-400 hover:text-red-600 transition" title="Delete">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            )) : (
+              <div className="px-6 py-8 text-center text-gray-500">No artists found.</div>
+            )
           ) : songs.length > 0 ? songs.map(song => (
             <div key={song.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 flex-wrap gap-4">
               <div className="flex items-center gap-4">
@@ -249,6 +368,68 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+
+      {/* Artist Modal */}
+      {showArtistModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold">{editingArtistId ? 'Edit Artist' : 'Add Artist'}</h2>
+              <button onClick={() => setShowArtistModal(false)} className="text-gray-400 hover:text-black">
+                <X size={24} />
+              </button>
+            </div>
+            <form onSubmit={handleArtistSubmit} className="p-6 flex flex-col gap-5">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Artist Name</label>
+                <input 
+                  type="text" required
+                  value={artistData.name}
+                  onChange={(e) => setArtistData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-black focus:ring-1 focus:ring-black"
+                  placeholder="Artist Display Name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Bio</label>
+                <textarea 
+                  rows={3}
+                  value={artistData.bio}
+                  onChange={(e) => setArtistData(prev => ({ ...prev, bio: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-black focus:ring-1 focus:ring-black"
+                  placeholder="Quick bio about the artist..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Artist Photo</label>
+                <div className="flex items-center gap-4">
+                  {artistData.imageBase64 ? (
+                    <img src={artistData.imageBase64} alt="Preview" className="w-16 h-16 rounded-full object-cover border border-gray-200" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200">
+                      <ImageIcon size={24} />
+                    </div>
+                  )}
+                  <input 
+                    type="file" accept="image/*"
+                    onChange={handleArtistImageUpload}
+                    className="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-4">
+                <button type="button" onClick={() => setShowArtistModal(false)} className="px-5 py-2.5 rounded-lg font-bold text-gray-600 hover:bg-gray-100">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 rounded-lg font-bold bg-black text-white hover:bg-gray-900">
+                  {editingArtistId ? 'Update Artist' : 'Save Artist'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Upload Modal */}
       {showUploadModal && (
