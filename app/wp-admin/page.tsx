@@ -94,6 +94,10 @@ export default function AdminDashboard() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 1048487) {
+        alert("Image is too large. Please upload an image smaller than 1MB.");
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setUploadData(prev => ({ ...prev, imageBase64: reader.result as string }));
@@ -105,6 +109,10 @@ export default function AdminDashboard() {
   const handleArtistImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 1048487) {
+        alert("Image is too large. Please upload an image smaller than 1MB.");
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setArtistData(prev => ({ ...prev, imageBase64: reader.result as string }));
@@ -149,7 +157,7 @@ export default function AdminDashboard() {
       fetchSongs();
     } catch (error) {
       console.error("Error saving document: ", error);
-      alert("Error saving post");
+      alert("Error saving post: " + ((error as Error).message || error));
     }
   };
 
@@ -174,7 +182,7 @@ export default function AdminDashboard() {
       fetchArtists();
     } catch (error) {
       console.error("Error saving artist: ", error);
-      alert("Error saving artist");
+      alert("Error saving artist: " + ((error as Error).message || error));
     }
   };
 
