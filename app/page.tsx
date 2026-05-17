@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { SongCard } from '@/components/ui/song-card';
+import Link from 'next/link';
 
 interface Song {
   id: string;
@@ -17,12 +18,11 @@ interface Song {
 export default function Home() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   useEffect(() => {
     const fetchSongs = async () => {
       try {
-        const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'), limit(10));
+        const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'), limit(16));
         const snapshot = await getDocs(q);
         const fetchedSongs: Song[] = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -38,95 +38,91 @@ export default function Home() {
     fetchSongs();
   }, []);
 
-  useEffect(() => {
-    if (songs.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentSlideIndex((prev) => (prev + 1) % songs.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [songs.length]);
-
-  const currentHeroSong = songs[currentSlideIndex];
+  const featured = songs[0];
+  const hotReleases = songs.slice(1, 6);
+  const latestUploads = songs.slice(6);
 
   return (
-    <>
-      {loading ? (
-        <div className="relative rounded-3xl overflow-hidden aspect-[21/9] flex-shrink-0 bg-gray-100 border border-gray-200 min-h-[300px] flex items-center justify-center">
-          <span className="text-gray-500">Loading featured...</span>
+    <div className="flex flex-col gap-12">
+      {/* Top Section Layout */}
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Main Hero (Featured) */}
+        <div className="lg:w-2/3">
+          {loading ? (
+            <div className="aspect-[16/9] w-full bg-gray-100 rounded-[2rem] animate-pulse" />
+          ) : featured ? (
+            <Link href={`/song/${featured.id}`} className="group relative block aspect-[16/9] w-full rounded-[2.5rem] overflow-hidden bg-black shadow-2xl">
+               {featured.imageBase64 && (
+                 <img 
+                   src={featured.imageBase64} 
+                   alt={featured.title} 
+                   className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" 
+                 />
+               )}
+               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+               <div className="absolute bottom-0 left-0 p-8 md:p-12 text-white">
+                  <span className="bg-[#39FF14] text-black text-[10px] font-black px-3 py-1 rounded-full tracking-widest uppercase mb-4 inline-block">Featured Today</span>
+                  <h1 className="text-4xl md:text-7xl font-black mb-4 tracking-tighter leading-none">{featured.title}</h1>
+                  <p className="text-gray-300 text-xl font-bold tracking-tight">By {featured.artist}</p>
+                  <div className="flex gap-4 mt-8">
+                    <div className="bg-white text-black px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest group-hover:bg-[#39FF14] transition-colors">Listen Now</div>
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest">Details</div>
+                  </div>
+               </div>
+            </Link>
+          ) : null}
         </div>
-      ) : currentHeroSong ? (
-        <div className="relative rounded-3xl overflow-hidden aspect-[21/9] flex-shrink-0 bg-gradient-to-r from-emerald-100 to-white border border-gray-200 group min-h-[300px]">
-          {currentHeroSong.imageBase64 ? (
-            <div 
-              className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-1000"
-              style={{ backgroundImage: `url(${currentHeroSong.imageBase64})` }}
-            ></div>
-          ) : (
-            <div className="absolute inset-0 bg-black opacity-20 group-hover:scale-105 transition-transform duration-1000"></div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-          <div className="relative h-full flex flex-col justify-end p-6 md:p-10 text-white">
-            <span className="text-[#39FF14] text-xs font-bold uppercase tracking-widest mb-2">Featured Release</span>
-            <h1 className="text-4xl md:text-5xl font-black mb-4 leading-none">{currentHeroSong.title}</h1>
-            <p className="text-gray-200 max-w-lg mb-6 line-clamp-2 text-sm md:text-base">By {currentHeroSong.artist}</p>
-            <div className="flex flex-wrap gap-4">
-              <button className="bg-white text-black px-6 md:px-8 py-3 rounded-full font-bold hover:bg-[#39FF14] transition-colors text-sm">Listen Now</button>
-              <button className="bg-black/50 backdrop-blur-md border border-white/20 px-6 md:px-8 py-3 rounded-full font-bold hover:bg-black/70 text-white text-sm">Add to Playlist</button>
-              <button className="bg-blue-600/80 backdrop-blur-md border border-blue-400/30 px-6 md:px-8 py-3 rounded-full font-bold hover:bg-blue-600 text-white text-sm">Download</button>
+
+        {/* Hot Releases Sidebar */}
+        <div className="lg:w-1/3">
+          <div className="flex flex-col h-full bg-gray-50 rounded-[2.5rem] p-6 border border-gray-100">
+            <h2 className="text-xl font-black mb-6 tracking-tight flex items-center justify-between">
+              Hot Releases
+              <Link href="/music" className="text-[10px] text-blue-600 font-black uppercase tracking-widest hover:underline">View All</Link>
+            </h2>
+            <div className="flex flex-col gap-4">
+              {loading ? (
+                [...Array(5)].map((_, i) => <div key={i} className="h-20 bg-gray-200/50 rounded-2xl animate-pulse" />)
+              ) : hotReleases.map((song) => (
+                <Link key={song.id} href={`/song/${song.id}`} className="flex items-center gap-4 p-2 rounded-2xl hover:bg-white hover:shadow-sm transition-all group">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shadow-sm shrink-0">
+                    {song.imageBase64 && <img src={song.imageBase64} alt={song.title} className="w-full h-full object-cover" />}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-sm text-gray-900 truncate group-hover:text-blue-600 transition-colors uppercase tracking-tight">{song.title}</h3>
+                    <p className="text-xs text-gray-500 font-bold truncate opacity-80">{song.artist}</p>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
-          
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
-            {songs.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentSlideIndex(idx)}
-                className={`w-2 h-2 rounded-full transition-all ${idx === currentSlideIndex ? 'bg-[#39FF14] w-4' : 'bg-white/50'}`}
-              />
+        </div>
+      </div>
+
+      {/* Latest Uploads */}
+      <div>
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-black tracking-tight uppercase">Latest Uploads</h2>
+          <Link href="/music" className="text-xs font-black text-gray-400 uppercase tracking-widest hover:text-black">Explore All</Link>
+        </div>
+        
+        {loading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-6">
+            {[...Array(7)].map((_, i) => (
+              <div key={i} className="flex flex-col gap-3 animate-pulse">
+                <div className="aspect-square bg-gray-100 rounded-2xl" />
+                <div className="h-3 w-3/4 bg-gray-100 rounded" />
+              </div>
             ))}
           </div>
-        </div>
-      ) : (
-        <div className="relative rounded-3xl overflow-hidden aspect-[21/9] flex-shrink-0 bg-gray-100 border border-gray-200 min-h-[300px] flex items-center justify-center">
-          <span className="text-gray-500">No featured songs found.</span>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">Hot Releases</h2>
-          <a href="#" className="text-xs text-blue-600 font-bold uppercase hover:underline">View All</a>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {loading ? (
-            <div className="col-span-full py-10 text-center text-gray-500">Loading songs...</div>
-          ) : songs.length > 0 ? (
-            songs.slice(0, 5).map((song) => (
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-6">
+            {latestUploads.map((song) => (
               <SongCard key={song.id} {...song} />
-            ))
-          ) : (
-            <div className="col-span-full py-10 text-center text-gray-500">No songs found.</div>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">Latest Uploads</h2>
-          <a href="#" className="text-xs text-blue-600 font-bold uppercase hover:underline">View All</a>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-           {loading ? (
-            <div className="col-span-full py-10 text-center text-gray-500">Loading songs...</div>
-          ) : songs.length > 0 ? (
-            songs.slice(0, 5).map((song) => (
-              <SongCard key={`latest-${song.id}`} {...song} />
-            ))
-          ) : (
-             <div className="col-span-full py-10 text-center text-gray-500">No songs found.</div>
-          )}
-        </div>
-      </div>
-    </>
+    </div>
   );
 }

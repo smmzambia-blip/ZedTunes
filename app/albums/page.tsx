@@ -45,19 +45,19 @@ export default function AlbumsPage() {
           <Layers size={24} />
         </div>
         <div>
-          <h1 className="text-3xl font-black tracking-tight">New Albums</h1>
-          <p className="text-gray-500">Full collections and EPs from your favorite artists</p>
+          <h1 className="text-3xl font-black tracking-tight uppercase">New Albums</h1>
+          <p className="text-gray-500 font-medium tracking-tight">Full collections and EPs from your favorite artists</p>
         </div>
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {[...Array(5)].map((_, i) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-6">
+          {[...Array(14)].map((_, i) => (
             <div key={i} className="animate-pulse bg-gray-100 rounded-2xl aspect-square"></div>
           ))}
         </div>
       ) : albums.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-6">
           {albums.map((album) => (
             <SongCard key={album.id} {...album} />
           ))}
