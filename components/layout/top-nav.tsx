@@ -37,49 +37,51 @@ export function TopNav() {
   const isAdmin = user?.email === "hilzmg70@gmail.com";
 
   return (
-    <header className="h-16 flex items-center justify-between px-4 sm:px-8 border-b border-gray-200 bg-white z-40">
-      <div className="flex items-center gap-8">
-        <Link href="/" className="text-2xl font-black tracking-tighter text-[#39FF14] mix-blend-difference drop-shadow-[0_0_2px_rgba(0,0,0,0.8)]">
-          ZEDTUNES
-        </Link>
-        <nav className="flex gap-4 sm:gap-6 text-sm font-medium text-gray-700">
-          <Link href="/music" className="hover:text-black">Music</Link>
-          <Link href="/trending" className="hover:text-black">Trending</Link>
-          <Link href="/albums" className="hover:text-black">Albums</Link>
-          <Link href="/artists" className="hover:text-black">Artists</Link>
-        </nav>
-      </div>
-      
-      <div className="flex items-center gap-4">
-        <div className="flex items-center">
-          {isSearchOpen && (
-            <input 
-              type="text" 
-              placeholder="Search..." 
-              className="mr-2 bg-gray-100 border border-gray-300 rounded-full py-1.5 px-4 text-sm text-black focus:outline-none focus:border-[#39FF14] transition-colors placeholder:text-gray-500 w-32 sm:w-48"
-              autoFocus
-              onBlur={() => setTimeout(() => setIsSearchOpen(false), 200)}
-            />
-          )}
-          <button onClick={() => setIsSearchOpen(!isSearchOpen)} className="p-2 text-gray-600 hover:text-black transition">
-            <Search className="w-5 h-5" />
-          </button>
+    <header className="flex flex-col bg-white shadow-sm z-40 border-b border-gray-100">
+      <div className="h-16 flex items-center justify-between px-4 sm:px-8">
+        <div className="flex items-center gap-6 md:gap-10">
+          <Link href="/" className="text-2xl font-black tracking-tighter text-[#39FF14] bg-black px-3 py-1 rounded-md shadow-md hover:scale-105 transition-transform flex-shrink-0">
+            ZED<span className="text-white">TUNES</span>
+          </Link>
         </div>
-
-        {isAdmin ? (
-          <>
-            <Link href="/admin" className="text-sm font-semibold text-blue-600 hover:text-blue-800">Admin</Link>
-            <button onClick={handleLogout} className="text-sm font-semibold hover:text-black text-gray-600 flex items-center gap-2">
-              <LogOut size={16} />
-              <span className="hidden sm:inline">Logout</span>
+        
+        <div className="flex items-center gap-4">
+          <div className="flex items-center">
+            {isSearchOpen && (
+              <input 
+                type="text" 
+                placeholder="Search..." 
+                className="mr-2 bg-gray-100 border border-transparent rounded-full py-2 px-4 text-sm text-black focus:outline-none focus:border-black focus:bg-white transition-all shadow-inner placeholder:text-gray-400 w-32 sm:w-64"
+                autoFocus
+                onBlur={() => setTimeout(() => setIsSearchOpen(false), 200)}
+              />
+            )}
+            <button onClick={() => setIsSearchOpen(!isSearchOpen)} className="p-2 text-gray-900 bg-gray-100 rounded-full hover:bg-gray-200 transition">
+              <Search className="w-4 h-4" />
             </button>
-          </>
-        ) : (
-          <button onClick={handleLogin} className="text-sm font-semibold text-gray-600 hover:text-black transition flex items-center gap-1 opacity-0 w-0 h-0 overflow-hidden" tabIndex={-1} aria-hidden="true" title="Hidden Login">
-            Login
-          </button>
-        )}
+          </div>
+
+          {isAdmin ? (
+            <>
+              <Link href="/wp-admin" className="text-sm font-bold text-white bg-blue-600 px-4 py-2 rounded-full hover:bg-blue-700 transition">WP-Admin</Link>
+              <button onClick={handleLogout} className="text-sm font-bold hover:text-black text-gray-500 flex items-center gap-2 transition-colors">
+                <LogOut size={16} />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            </>
+          ) : (
+            <button onClick={handleLogin} className="text-sm font-semibold text-gray-600 hover:text-black transition flex items-center gap-1 opacity-0 w-0 h-0 overflow-hidden" tabIndex={-1} aria-hidden="true" title="Hidden Login">
+              Login
+            </button>
+          )}
+        </div>
       </div>
+      <nav className="flex md:absolute md:left-1/2 md:-translate-x-1/2 md:top-5 gap-6 text-sm font-bold text-gray-600 overflow-x-auto px-4 pb-3 sm:px-8 md:px-0 md:pb-0 scrollbar-hide">
+        <Link href="/music" className="hover:text-black transition-colors uppercase tracking-wide whitespace-nowrap">Music</Link>
+        <Link href="/trending" className="hover:text-black transition-colors uppercase tracking-wide whitespace-nowrap">Trending</Link>
+        <Link href="/albums" className="hover:text-black transition-colors uppercase tracking-wide whitespace-nowrap">Albums</Link>
+        <Link href="/artists" className="hover:text-black transition-colors uppercase tracking-wide whitespace-nowrap">Artists</Link>
+      </nav>
     </header>
   );
 }
