@@ -1,0 +1,8 @@
+{
+  "name": "ZedTunes",
+  "description": "Zambia's hottest music platform with SEO-friendly slugs and lightning-fast streaming.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

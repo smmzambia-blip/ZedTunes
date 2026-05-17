@@ -2,7 +2,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, collection, query, where, getDocs, updateDoc } from "firebase/firestore";
 import { Metadata } from "next";
 import { generateSlug } from "@/lib/slug";
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 import SongClient, { Song as SongType } from "../../song/[slug]/SongClient";
 
 interface PageProps {
@@ -75,7 +75,7 @@ export default async function AlbumPage({ params }: PageProps) {
   const { disc, needsRedirect } = await getAlbumData(params.slug);
 
   if (needsRedirect) {
-    redirect(needsRedirect);
+    permanentRedirect(needsRedirect);
   }
 
   if (!disc) {

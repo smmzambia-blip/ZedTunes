@@ -5,7 +5,7 @@ export function generateSlug(text: string): string {
     .toLowerCase()
     .trim()
     .replace(/\s+/g, '-')     // Replace spaces with -
-    .replace(/[^\w-]+/g, '')  // Remove all non-word chars
+    .replace(/[^a-z0-9-]/g, '') // Remove all non-alphanumeric chars except hyphens
     .replace(/--+/g, '-')     // Replace multiple - with single -
     .replace(/^-+/, '')       // Trim - from start of text
     .replace(/-+$/, '');      // Trim - from end of text
