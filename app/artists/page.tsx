@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import Image from 'next/image';
 import { Users, Edit } from 'lucide-react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import Link from 'next/link';
@@ -81,9 +82,15 @@ export default function ArtistsPage() {
                 </Link>
               )}
               <Link href={`/artists/${artist.id}`} className="flex flex-col items-center cursor-pointer">
-                <div className="relative w-32 h-32 rounded-full overflow-hidden mb-4 border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-300">
+                <div className="relative w-32 h-32 rounded-full overflow-hidden mb-4 border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-300 bg-white">
                   {artist.imageBase64 ? (
-                    <img src={artist.imageBase64} alt={artist.name} className="w-full h-full object-cover" />
+                    <Image 
+                      src={artist.imageBase64} 
+                      alt={artist.name} 
+                      fill
+                      className="object-cover" 
+                      referrerPolicy="no-referrer"
+                    />
                   ) : (
                     <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
                       <Users size={40} />

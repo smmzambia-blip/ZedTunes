@@ -3,8 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import Image from "next/image";
 import { Users, Music } from "lucide-react";
 import { SongCard } from "@/components/ui/song-card";
+
+import { Timestamp } from 'firebase/firestore';
 
 interface Artist {
   id: string;
@@ -19,6 +22,7 @@ interface Song {
   artist: string;
   imageBase64?: string;
   category?: string;
+  createdAt?: Timestamp;
 }
 
 export default function ArtistDetailPage({ params }: { params: { id: string } }) {
@@ -82,9 +86,16 @@ export default function ArtistDetailPage({ params }: { params: { id: string } })
       <div className="flex flex-col md:flex-row gap-8 items-center md:items-end mb-16 bg-gradient-to-br from-purple-50 to-white p-8 md:p-12 rounded-[2rem] border border-purple-100 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-purple-200/20 rounded-full -mr-32 -mt-32 blur-3xl"></div>
         
-        <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-full overflow-hidden border-8 border-white shadow-2xl relative z-10 shrink-0">
+        <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-full overflow-hidden border-8 border-white shadow-2xl relative z-10 shrink-0 bg-white">
           {artist.imageBase64 ? (
-            <img src={artist.imageBase64} alt={artist.name} className="w-full h-full object-cover" />
+            <Image 
+              src={artist.imageBase64} 
+              alt={artist.name} 
+              fill
+              priority
+              className="object-cover" 
+              referrerPolicy="no-referrer"
+            />
           ) : (
             <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300">
               <Users size={80} />

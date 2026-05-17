@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { Download, Heart, Play, Music, Layers, Clock, Edit } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import Link from "next/link";
+import Image from "next/image";
 
 interface Song {
   id: string;
@@ -17,6 +18,7 @@ interface Song {
   description?: string;
   archiveLink?: string;
   tracks?: { title: string; url: string }[];
+  createdAt?: Timestamp;
 }
 
 export default function SongPage({ params }: { params: { id: string } }) {
@@ -70,6 +72,16 @@ export default function SongPage({ params }: { params: { id: string } }) {
   const isAlbum = song.category === 'Album';
   const isAdmin = user?.email === "hilzmg70@gmail.com";
 
+  const formatDate = (date: Timestamp | undefined) => {
+    if (!date) return '';
+    const d = date.toDate ? date.toDate() : new Date(date as unknown as string);
+    return d.toLocaleDateString('en-US', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric' 
+    });
+  };
+
   return (
     <div className="max-w-5xl mx-auto py-12 px-4 sm:px-8">
       {isAdmin && (
@@ -85,13 +97,20 @@ export default function SongPage({ params }: { params: { id: string } }) {
       <div className="flex flex-col md:flex-row gap-12 items-start mb-16">
         <div className="w-full md:w-80 aspect-square bg-gray-100 rounded-3xl shadow-2xl shadow-black/10 overflow-hidden flex-shrink-0 relative group">
           {song.imageBase64 ? (
-            <img src={song.imageBase64} alt={song.title} className="w-full h-full object-cover" />
+            <Image 
+              src={song.imageBase64} 
+              alt={song.title} 
+              fill
+              priority
+              className="object-cover" 
+              referrerPolicy="no-referrer"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300">
               {isAlbum ? <Layers size={80} /> : <Music size={80} />}
             </div>
           )}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
              <button className="w-16 h-16 bg-[#39FF14] rounded-full flex items-center justify-center text-black shadow-xl transform scale-90 group-hover:scale-100 transition-transform">
                <Play size={32} fill="black" />
              </button>
@@ -105,7 +124,7 @@ export default function SongPage({ params }: { params: { id: string } }) {
                 {song.category}
               </span>
               <span className="text-gray-400 text-xs font-bold flex items-center gap-1 tracking-tight">
-                <Clock size={12} /> {(new Date()).toLocaleDateString()}
+                <Clock size={12} /> {formatDate(song.createdAt)}
               </span>
             </div>
             <h1 className="text-4xl sm:text-6xl font-black mb-2 tracking-tight text-gray-900 leading-none">{song.title}</h1>

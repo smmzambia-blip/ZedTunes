@@ -6,6 +6,8 @@ import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { SongCard } from '@/components/ui/song-card';
 import { Layers } from 'lucide-react';
 
+import { Timestamp } from 'firebase/firestore';
+
 interface Song {
   id: string;
   title: string;
@@ -13,6 +15,7 @@ interface Song {
   views?: string;
   imageBase64?: string;
   category?: string;
+  createdAt?: Timestamp;
 }
 
 export default function AlbumsPage() {

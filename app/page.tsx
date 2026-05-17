@@ -5,6 +5,9 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { SongCard } from '@/components/ui/song-card';
 import Link from 'next/link';
+import Image from 'next/image';
+
+import { Timestamp } from 'firebase/firestore';
 
 interface Song {
   id: string;
@@ -13,6 +16,7 @@ interface Song {
   views?: string;
   imageBase64?: string;
   category?: string;
+  createdAt?: Timestamp;
 }
 
 export default function Home() {
@@ -53,10 +57,13 @@ export default function Home() {
           ) : featured ? (
             <Link href={`/song/${featured.id}`} className="group relative block aspect-[16/9] w-full rounded-[2.5rem] overflow-hidden bg-black shadow-2xl">
                {featured.imageBase64 && (
-                 <img 
+                 <Image 
                    src={featured.imageBase64} 
                    alt={featured.title} 
-                   className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" 
+                   fill
+                   priority
+                   className="object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" 
+                   referrerPolicy="no-referrer"
                  />
                )}
                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
@@ -85,8 +92,16 @@ export default function Home() {
                 [...Array(5)].map((_, i) => <div key={i} className="h-20 bg-gray-200/50 rounded-2xl animate-pulse" />)
               ) : hotReleases.map((song) => (
                 <Link key={song.id} href={`/song/${song.id}`} className="flex items-center gap-4 p-2 rounded-2xl hover:bg-white hover:shadow-sm transition-all group">
-                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shadow-sm shrink-0">
-                    {song.imageBase64 && <img src={song.imageBase64} alt={song.title} className="w-full h-full object-cover" />}
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shadow-sm shrink-0 relative">
+                    {song.imageBase64 && (
+                      <Image 
+                        src={song.imageBase64} 
+                        alt={song.title} 
+                        fill 
+                        className="object-cover" 
+                        referrerPolicy="no-referrer"
+                      />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-bold text-sm text-gray-900 truncate group-hover:text-blue-600 transition-colors uppercase tracking-tight">{song.title}</h3>

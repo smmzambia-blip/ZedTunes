@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Search, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { auth, db } from '@/lib/firebase';
@@ -55,8 +56,14 @@ export function TopNav() {
     <header className="flex flex-col bg-white shadow-sm z-40 border-b border-gray-100">
       <div className="pt-6 pb-2 flex flex-col items-center justify-center gap-2 px-4 sm:px-8 relative">
         {siteSettings?.logoBase64 && (
-          <div className="w-16 h-16 mb-2">
-             <img src={siteSettings.logoBase64} alt="Site Logo" className="w-full h-full object-contain" />
+          <div className="w-16 h-16 mb-2 relative">
+             <Image 
+               src={siteSettings.logoBase64} 
+               alt="Site Logo" 
+               fill
+               className="object-contain" 
+               referrerPolicy="no-referrer"
+             />
           </div>
         )}
         <Link href="/" className="text-3xl font-black tracking-tighter text-[#39FF14] bg-black px-4 py-1.5 rounded-lg shadow-xl hover:scale-105 transition-transform flex-shrink-0">

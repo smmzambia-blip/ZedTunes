@@ -3,9 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-import { Download, Edit, Music } from 'lucide-react';
+import { Download, Edit, Music, Calendar } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import Image from 'next/image';
+
+import { Timestamp } from 'firebase/firestore';
 
 interface SongCardProps {
   id: string;
@@ -14,10 +17,21 @@ interface SongCardProps {
   views?: string;
   imageBase64?: string;
   category?: string;
+  createdAt?: Timestamp;
 }
 
-export function SongCard({ id, title, artist, imageBase64, category }: SongCardProps) {
+export function SongCard({ id, title, artist, imageBase64, category, createdAt }: SongCardProps) {
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const formatDate = (date: Timestamp | undefined) => {
+    if (!date) return '';
+    const d = date.toDate ? date.toDate() : new Date(date as unknown as string);
+    return d.toLocaleDateString('en-US', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric' 
+    });
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -72,11 +86,16 @@ export function SongCard({ id, title, artist, imageBase64, category }: SongCardP
         </div>
         
         {imageBase64 ? (
-          <img 
-            src={imageBase64} 
-            alt={title} 
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-110" 
-          />
+          <div className="h-full w-full relative overflow-hidden">
+            <Image 
+              src={imageBase64} 
+              alt={title} 
+              fill
+              className="object-cover transition duration-700 group-hover:scale-110" 
+              referrerPolicy="no-referrer"
+              loading="lazy"
+            />
+          </div>
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-gray-100 to-gray-200 z-0 flex items-center justify-center text-gray-300">
              <Music size={20} />
@@ -85,7 +104,14 @@ export function SongCard({ id, title, artist, imageBase64, category }: SongCardP
       </div>
       <div className="min-w-0 px-0.5">
         <div className="font-bold text-[11px] leading-tight truncate text-gray-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{title}</div>
-        <div className="text-[9px] text-gray-400 font-bold truncate mt-0.5 opacity-80 uppercase tracking-tighter">{artist}</div>
+        <div className="flex flex-col mt-0.5">
+          <div className="text-[9px] text-gray-500 font-bold truncate opacity-80 uppercase tracking-tighter">{artist}</div>
+          {createdAt && (
+            <div className="text-[7px] text-gray-400 font-medium flex items-center gap-1 mt-0.5 uppercase tracking-tighter">
+              <Calendar size={8} /> {formatDate(createdAt)}
+            </div>
+          )}
+        </div>
       </div>
     </Link>
   );
