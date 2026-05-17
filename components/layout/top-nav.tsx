@@ -52,6 +52,7 @@ export function TopNav() {
                src={siteSettings.logoBase64} 
                alt="Site Logo" 
                fill
+               sizes="64px"
                className="object-contain" 
                referrerPolicy="no-referrer"
              />

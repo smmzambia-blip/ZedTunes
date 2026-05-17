@@ -104,6 +104,7 @@ export default function SongPage({ params }: { params: { id: string } }) {
               alt={song.title} 
               fill
               priority
+              sizes="(max-width: 768px) 100vw, 320px"
               className="object-cover" 
               referrerPolicy="no-referrer"
             />

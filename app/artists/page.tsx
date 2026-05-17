@@ -88,6 +88,7 @@ export default function ArtistsPage() {
                       src={artist.imageBase64} 
                       alt={artist.name} 
                       fill
+                      sizes="128px"
                       className="object-cover" 
                       referrerPolicy="no-referrer"
                     />

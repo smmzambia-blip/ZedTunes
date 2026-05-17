@@ -94,6 +94,7 @@ export default function ArtistDetailPage({ params }: { params: { id: string } })
               alt={artist.name} 
               fill
               priority
+              sizes="(max-width: 640px) 192px, 256px"
               className="object-cover" 
               referrerPolicy="no-referrer"
             />

@@ -98,6 +98,7 @@ export function SongCard({ id, title, artist, imageBase64, category, createdAt, 
               src={imageBase64} 
               alt={title} 
               fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 15vw"
               className="object-cover transition duration-700 group-hover:scale-110" 
               referrerPolicy="no-referrer"
               loading="lazy"

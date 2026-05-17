@@ -63,6 +63,7 @@ export default function Home() {
                    alt={featured.title} 
                    fill
                    priority
+                   sizes="(max-width: 1024px) 100vw, 66vw"
                    className="object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" 
                    referrerPolicy="no-referrer"
                  />
@@ -70,12 +71,9 @@ export default function Home() {
                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
                <div className="absolute bottom-0 left-0 p-8 md:p-12 text-white">
                   <span className="bg-[#39FF14] text-black text-[10px] font-black px-3 py-1 rounded-full tracking-widest uppercase mb-4 inline-block">Featured Today</span>
-                  <h1 className="text-4xl md:text-7xl font-black mb-4 tracking-tighter leading-none">{featured.title}</h1>
-                  <p className="text-gray-300 text-xl font-bold tracking-tight">By {featured.artist}</p>
-                  <div className="flex gap-4 mt-8">
-                    <div className="bg-white text-black px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest group-hover:bg-[#39FF14] transition-colors">Listen Now</div>
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest">Details</div>
-                  </div>
+                  <h1 className="text-4xl md:text-7xl font-black mb-2 tracking-tighter leading-none">{featured.title}</h1>
+                  <p className="text-gray-300 text-xl font-bold tracking-tight mb-2">By {featured.artist}</p>
+                  <p className="text-[#39FF14]/80 text-[10px] font-black uppercase tracking-[0.2em]">Click to listen</p>
                </div>
             </Link>
           ) : null}
@@ -99,6 +97,7 @@ export default function Home() {
                         src={song.imageBase64} 
                         alt={song.title} 
                         fill 
+                        sizes="64px"
                         className="object-cover" 
                         referrerPolicy="no-referrer"
                       />
