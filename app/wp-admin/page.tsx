@@ -39,8 +39,8 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  console.error('Firestore Error: ', errInfo);
+  alert(`Error during ${operationType} on ${path || 'unknown'}: ${errInfo.error}`);
 }
 
 interface Song {
@@ -141,12 +141,14 @@ export default function AdminDashboard() {
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Saving site settings...");
     setIsSaving(true);
     try {
       await setDoc(doc(db, 'settings', 'site'), {
         ...siteSettings,
         updatedAt: serverTimestamp()
       });
+      console.log("Settings saved successfully");
       alert("Site settings updated successfully!");
       setShowSiteSettingsModal(false);
     } catch (e) {
@@ -157,9 +159,21 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchSongs();
-    fetchArtists();
-    fetchSettings();
+    // We use a separate function to handle the async calls to avoid unhandled rejections
+    const init = async () => {
+      try {
+        await Promise.all([
+          fetchSongs(),
+          fetchArtists(),
+          fetchSettings()
+        ]);
+      } catch (e) {
+        console.error("Initialization failed", e);
+      }
+    };
+
+    init();
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
@@ -199,6 +213,7 @@ export default function AdminDashboard() {
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Publishing/Updating post...");
     setIsSaving(true);
     try {
       const dataToSave = {
@@ -208,11 +223,13 @@ export default function AdminDashboard() {
       };
 
       if (editingId) {
+        console.log("Updating document: ", editingId);
         await updateDoc(doc(db, 'songs', editingId), {
           ...dataToSave
         });
         alert("Post updated successfully!");
       } else {
+        console.log("Adding new document to 'songs'");
         await addDoc(collection(db, 'songs'), {
           ...dataToSave,
           createdAt: serverTimestamp(),
