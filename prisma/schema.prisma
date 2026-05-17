@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  songs         Song[]    @relation("UploadedSongs")
+  playlists     Playlist[]
+  comments      Comment[]
+  likes         Like[]
+  downloads     Download[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Song {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  artistId    String
+  artist      Artist   @relation(fields: [artistId], references: [id])
+  albumId     String?
+  album       Album?   @relation(fields: [albumId], references: [id])
+  genreId     String?
+  genre       Genre?   @relation(fields: [genreId], references: [id])
+  
+  coverImage  String?
+  mp3Url      String
+  lyrics      String?  @db.Text
+  releaseDate DateTime?
+  
+  viewCount   Int      @default(0)
+  uploaderId  String
+  uploader    User     @relation("UploadedSongs", fields: [uploaderId], references: [id])
+  
+  status      Status   @default(PUBLISHED)
+  
+  comments    Comment[]
+  likes       Like[]
+  downloads   Download[]
+  playlists   PlaylistSong[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([slug])
+}
+
+enum Status {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+}
+
+model Artist {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  bio         String?  @db.Text
+  image       String?
+  
+  songs       Song[]
+  albums      Album[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Album {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  artistId    String
+  artist      Artist   @relation(fields: [artistId], references: [id])
+  coverImage  String?
+  releaseDate DateTime?
+  
+  songs       Song[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Genre {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  
+  songs       Song[]
+}
+
+model Playlist {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isPublic    Boolean  @default(true)
+  
+  songs       PlaylistSong[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PlaylistSong {
+  id          String   @id @default(cuid())
+  playlistId  String
+  playlist    Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  songId      String
+  song        Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  addedAt     DateTime @default(now())
+
+  @@unique([playlistId, songId])
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  content     String   @db.Text
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  songId      String
+  song        Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Like {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  songId      String
+  song        Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, songId])
+}
+
+model Download {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  songId      String
+  song        Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}

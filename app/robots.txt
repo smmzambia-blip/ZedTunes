@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://zedtunes.example.com/sitemap.xml
