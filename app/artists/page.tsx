@@ -70,27 +70,29 @@ export default function ArtistsPage() {
       ) : artists.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8">
           {artists.map((artist) => (
-            <div key={artist.id} className="flex flex-col items-center group relative">
+            <div key={artist.id} className="relative group">
               {isAdmin && (
                 <Link 
                   href={`/wp-admin?editArtistId=${artist.id}`}
-                  className="absolute -top-2 -right-2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-lg"
+                  className="absolute -top-2 -right-2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-lg hover:bg-blue-700"
                   title="Edit Artist"
                 >
                   <Edit size={14} />
                 </Link>
               )}
-              <div className="relative w-32 h-32 rounded-full overflow-hidden mb-4 border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-300">
-                {artist.imageBase64 ? (
-                  <img src={artist.imageBase64} alt={artist.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
-                    <Users size={40} />
-                  </div>
-                )}
-              </div>
-              <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors">{artist.name}</h3>
-              <p className="text-xs text-gray-500 line-clamp-1">{artist.bio || 'Artist'}</p>
+              <Link href={`/artists/${artist.id}`} className="flex flex-col items-center cursor-pointer">
+                <div className="relative w-32 h-32 rounded-full overflow-hidden mb-4 border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-300">
+                  {artist.imageBase64 ? (
+                    <img src={artist.imageBase64} alt={artist.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                      <Users size={40} />
+                    </div>
+                  )}
+                </div>
+                <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors text-center">{artist.name}</h3>
+                <p className="text-xs text-gray-500 line-clamp-1 text-center">{artist.bio || 'Artist'}</p>
+              </Link>
             </div>
           ))}
         </div>
