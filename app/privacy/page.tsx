@@ -38,7 +38,7 @@ export default function Privacy() {
         <section>
           <h2 className="text-2xl font-bold text-black mb-4">5. Contact Us</h2>
           <p>
-            If you have any questions about this Privacy Policy, please contact us at <a href="mailto:support@zedtunes.com" className="text-blue-600 font-bold hover:underline">support@zedtunes.com</a>.
+            If you have any questions about this Privacy Policy, please contact us at <a href="mailto:zedtuneza@gmail.com" className="text-blue-600 font-bold hover:underline">zedtuneza@gmail.com</a>.
           </p>
         </section>
       </div>
