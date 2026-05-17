@@ -32,11 +32,13 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showArtistModal, setShowArtistModal] = useState(false);
+  const [showSiteSettingsModal, setShowSiteSettingsModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingArtistId, setEditingArtistId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'posts' | 'artists' | 'albums'>('posts');
   const [songs, setSongs] = useState<Song[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   const [uploadData, setUploadData] = useState({
     title: '',
     artist: '',
@@ -51,6 +53,11 @@ export default function AdminDashboard() {
     name: '',
     bio: '',
     imageBase64: ''
+  });
+
+  const [siteSettings, setSiteSettings] = useState({
+    siteName: 'ZedTunes',
+    siteBio: "Zambia's hottest music platform"
   });
 
   const fetchSongs = async () => {
@@ -81,7 +88,18 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    localStorage.setItem('siteSettings', JSON.stringify(siteSettings));
+    alert("Site settings saved locally! (Note: This is demo logic for now)");
+    setShowSiteSettingsModal(false);
+  };
+
   useEffect(() => {
+    const saved = localStorage.getItem('siteSettings');
+    if (saved) {
+      setSiteSettings(JSON.parse(saved));
+    }
     fetchSongs();
     fetchArtists();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -94,8 +112,8 @@ export default function AdminDashboard() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 700000) {
-        alert("Image is too large. Please upload an image smaller than 700KB.");
+      if (file.size > 500000) {
+        alert("Image is too large. Please upload an image smaller than 500KB.");
         return;
       }
       const reader = new FileReader();
@@ -109,8 +127,8 @@ export default function AdminDashboard() {
   const handleArtistImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 700000) {
-        alert("Image is too large. Please upload an image smaller than 700KB.");
+      if (file.size > 500000) {
+        alert("Image is too large. Please upload an image smaller than 500KB.");
         return;
       }
       const reader = new FileReader();
@@ -123,6 +141,7 @@ export default function AdminDashboard() {
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       const dataToSave = {
         ...uploadData,
@@ -157,12 +176,16 @@ export default function AdminDashboard() {
       fetchSongs();
     } catch (error) {
       console.error("Error saving document: ", error);
-      alert("Error saving post: " + ((error as Error).message || error));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      alert("Error saving post: " + errorMessage);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleArtistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       if (editingArtistId) {
         await updateDoc(doc(db, 'artists', editingArtistId), {
@@ -182,7 +205,10 @@ export default function AdminDashboard() {
       fetchArtists();
     } catch (error) {
       console.error("Error saving artist: ", error);
-      alert("Error saving artist: " + ((error as Error).message || error));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      alert("Error saving artist: " + errorMessage);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -272,8 +298,14 @@ export default function AdminDashboard() {
           <p className="text-gray-500 mt-1">Welcome back, Admin ({user.email})</p>
         </div>
         <div className="flex gap-4">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-blue-700 transition flex items-center gap-2">
-            <Edit size={16} /> Edit Site
+          <Link href="/" className="bg-gray-100 text-black px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-200 transition flex items-center gap-2">
+            View Site
+          </Link>
+          <button 
+            onClick={() => setShowSiteSettingsModal(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-blue-700 transition flex items-center gap-2"
+          >
+            <Edit size={16} /> Edit Settings
           </button>
         </div>
       </div>
@@ -283,9 +315,10 @@ export default function AdminDashboard() {
           onClick={() => {
             setEditingId(null);
             setUploadData({ title: '', artist: '', archiveLink: '', type: 'regular', imageBase64: '', description: '', tracks: [{ title: '', url: '' }] });
+            setActiveTab('posts');
             setShowUploadModal(true);
           }} 
-          className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left"
+          className={`bg-white p-6 rounded-xl border ${activeTab === 'posts' && uploadData.type === 'regular' ? 'border-black ring-1 ring-black' : 'border-gray-200'} shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left`}
         >
            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-2">
              <Upload size={20} />
@@ -297,9 +330,10 @@ export default function AdminDashboard() {
           onClick={() => {
             setEditingId(null);
             setUploadData({ title: '', artist: '', archiveLink: '', type: 'album', imageBase64: '', description: '', tracks: [{ title: '', url: '' }] });
+            setActiveTab('posts');
             setShowUploadModal(true);
           }}
-          className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left"
+          className={`bg-white p-6 rounded-xl border ${activeTab === 'posts' && uploadData.type === 'album' ? 'border-black ring-1 ring-black' : 'border-gray-200'} shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left`}
         >
            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-2">
              <Plus size={20} />
@@ -311,6 +345,7 @@ export default function AdminDashboard() {
           onClick={() => {
             setEditingArtistId(null);
             setArtistData({ name: '', bio: '', imageBase64: '' });
+            setActiveTab('artists');
             setShowArtistModal(true);
           }}
           className={`bg-white p-6 rounded-xl border ${activeTab === 'artists' ? 'border-black ring-1 ring-black' : 'border-gray-200'} shadow-sm flex flex-col gap-2 hover:bg-gray-50 transition text-left`}
@@ -394,6 +429,44 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Site Settings Modal */}
+      {showSiteSettingsModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold">Edit Site Settings</h2>
+              <button onClick={() => setShowSiteSettingsModal(false)} className="text-gray-400 hover:text-black">
+                <X size={24} />
+              </button>
+            </div>
+            <form onSubmit={handleSaveSettings} className="p-6 flex flex-col gap-5">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Site Name</label>
+                <input 
+                  type="text" required
+                  value={siteSettings.siteName}
+                  onChange={(e) => setSiteSettings(prev => ({ ...prev, siteName: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-black focus:ring-1 focus:ring-black"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Site Description</label>
+                <textarea 
+                  rows={3}
+                  value={siteSettings.siteBio}
+                  onChange={(e) => setSiteSettings(prev => ({ ...prev, siteBio: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-black focus:ring-1 focus:ring-black"
+                />
+              </div>
+              <div className="flex justify-end gap-3 mt-4">
+                <button type="button" onClick={() => setShowSiteSettingsModal(false)} className="px-5 py-2.5 rounded-lg font-bold text-gray-600 hover:bg-gray-100">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 rounded-lg font-bold bg-black text-white hover:bg-gray-900">Save Settings</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Artist Modal */}
       {showArtistModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
@@ -446,9 +519,9 @@ export default function AdminDashboard() {
               </div>
 
               <div className="flex justify-end gap-3 mt-4">
-                <button type="button" onClick={() => setShowArtistModal(false)} className="px-5 py-2.5 rounded-lg font-bold text-gray-600 hover:bg-gray-100">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 rounded-lg font-bold bg-black text-white hover:bg-gray-900">
-                  {editingArtistId ? 'Update Artist' : 'Save Artist'}
+                <button type="button" disabled={isSaving} onClick={() => setShowArtistModal(false)} className="px-5 py-2.5 rounded-lg font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-50">Cancel</button>
+                <button type="submit" disabled={isSaving} className="px-5 py-2.5 rounded-lg font-bold bg-black text-white hover:bg-gray-900 disabled:opacity-50">
+                  {isSaving ? 'Saving...' : (editingArtistId ? 'Update Artist' : 'Save Artist')}
                 </button>
               </div>
             </form>
@@ -613,8 +686,10 @@ export default function AdminDashboard() {
               )}
 
               <div className="flex justify-end gap-3 mt-4">
-                <button type="button" onClick={() => setShowUploadModal(false)} className="px-5 py-2.5 rounded-lg font-bold text-gray-600 hover:bg-gray-100">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 rounded-lg font-bold bg-black text-white hover:bg-gray-900">Publish Post</button>
+                <button type="button" disabled={isSaving} onClick={() => setShowUploadModal(false)} className="px-5 py-2.5 rounded-lg font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-50">Cancel</button>
+                <button type="submit" disabled={isSaving} className="px-5 py-2.5 rounded-lg font-bold bg-black text-white hover:bg-gray-900 disabled:opacity-50">
+                  {isSaving ? 'Saving...' : (editingId ? 'Update Post' : 'Publish Post')}
+                </button>
               </div>
             </form>
           </div>
