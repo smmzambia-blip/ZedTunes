@@ -3,7 +3,6 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { TopNav } from "@/components/layout/top-nav";
 import { Footer } from "@/components/layout/footer";
-import { MusicPlayer } from "@/components/player/music-player";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,9 +35,6 @@ export default function RootLayout({
             <Footer />
           </section>
         </main>
-        <div className="fixed bottom-0 left-0 right-0 z-50">
-          <MusicPlayer />
-        </div>
       </body>
     </html>
   );

@@ -77,6 +77,7 @@ export function TopNav() {
         </div>
       </div>
       <nav className="flex md:absolute md:left-1/2 md:-translate-x-1/2 md:top-5 gap-6 text-sm font-bold text-gray-600 overflow-x-auto px-4 pb-3 sm:px-8 md:px-0 md:pb-0 scrollbar-hide">
+        <Link href="/" className="hover:text-black transition-colors uppercase tracking-wide whitespace-nowrap">Home</Link>
         <Link href="/music" className="hover:text-black transition-colors uppercase tracking-wide whitespace-nowrap">Music</Link>
         <Link href="/trending" className="hover:text-black transition-colors uppercase tracking-wide whitespace-nowrap">Trending</Link>
         <Link href="/albums" className="hover:text-black transition-colors uppercase tracking-wide whitespace-nowrap">Albums</Link>
