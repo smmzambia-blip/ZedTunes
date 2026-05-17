@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { SongCard } from '@/components/ui/song-card';
-import Image from 'next/image';
 
 interface Song {
   id: string;
@@ -51,24 +50,6 @@ export default function Home() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center py-12 text-center border-b border-gray-100 mb-12">
-        <div className="w-32 h-32 mb-6 relative">
-          <Image 
-            src="/icon.png" 
-            alt="Zedtunes Logo" 
-            fill
-            className="object-contain"
-            referrerPolicy="no-referrer"
-          />
-        </div>
-        <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-4 text-gray-900">
-          ZED<span className="text-blue-600">TUNES</span>
-        </h1>
-        <p className="text-xl md:text-2xl font-bold text-gray-400 italic">
-          Zambia&apos;s Premier Music Excellence
-        </p>
-      </div>
-
       {loading ? (
         <div className="relative rounded-3xl overflow-hidden aspect-[21/9] flex-shrink-0 bg-gray-100 border border-gray-200 min-h-[300px] flex items-center justify-center">
           <span className="text-gray-500">Loading featured...</span>

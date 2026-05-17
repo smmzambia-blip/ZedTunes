@@ -38,20 +38,21 @@ export function TopNav() {
 
   return (
     <header className="flex flex-col bg-white shadow-sm z-40 border-b border-gray-100">
-      <div className="h-16 flex items-center justify-between px-4 sm:px-8">
-        <div className="flex items-center gap-6 md:gap-10">
-          <Link href="/" className="text-2xl font-black tracking-tighter text-[#39FF14] bg-black px-3 py-1 rounded-md shadow-md hover:scale-105 transition-transform flex-shrink-0">
-            ZED<span className="text-white">TUNES</span>
-          </Link>
-        </div>
-        
-        <div className="flex items-center gap-4">
+      <div className="pt-6 pb-2 flex flex-col items-center justify-center gap-2 px-4 sm:px-8 relative">
+        <Link href="/" className="text-3xl font-black tracking-tighter text-[#39FF14] bg-black px-4 py-1.5 rounded-lg shadow-xl hover:scale-105 transition-transform flex-shrink-0">
+          ZED<span className="text-white">TUNES</span>
+        </Link>
+        <p className="text-[10px] sm:text-xs font-bold text-gray-400 italic tracking-widest uppercase">
+          Zambia&apos;s Premier Music Excellence
+        </p>
+
+        <div className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 flex items-center gap-3">
           <div className="flex items-center">
             {isSearchOpen && (
               <input 
                 type="text" 
                 placeholder="Search..." 
-                className="mr-2 bg-gray-100 border border-transparent rounded-full py-2 px-4 text-sm text-black focus:outline-none focus:border-black focus:bg-white transition-all shadow-inner placeholder:text-gray-400 w-32 sm:w-64"
+                className="mr-2 bg-gray-100 border border-transparent rounded-full py-2 px-4 text-sm text-black focus:outline-none focus:border-black focus:bg-white transition-all shadow-inner placeholder:text-gray-400 w-24 sm:w-48"
                 autoFocus
                 onBlur={() => setTimeout(() => setIsSearchOpen(false), 200)}
               />
@@ -62,25 +63,25 @@ export function TopNav() {
           </div>
 
           {isAdmin ? (
-            <>
-              <Link href="/wp-admin" className="text-sm font-bold text-white bg-blue-600 px-4 py-2 rounded-full hover:bg-blue-700 transition">WP-Admin</Link>
-              <button onClick={handleLogout} className="text-sm font-bold hover:text-black text-gray-500 flex items-center gap-2 transition-colors">
+            <div className="flex items-center gap-3">
+              <Link href="/wp-admin" className="text-[10px] font-black text-white bg-blue-600 px-3 py-1.5 rounded-full hover:bg-blue-700 transition uppercase tracking-tighter">WP-Admin</Link>
+              <button onClick={handleLogout} className="p-2 text-gray-500 hover:text-red-600 transition-colors" title="Logout">
                 <LogOut size={16} />
-                <span className="hidden sm:inline">Logout</span>
               </button>
-            </>
+            </div>
           ) : (
-            <button onClick={handleLogin} className="text-sm font-bold text-black border border-gray-200 px-4 py-2 rounded-full hover:bg-gray-50 transition">
-              Admin Login
+            <button onClick={handleLogin} className="text-[10px] font-black text-gray-400 border border-gray-200 px-3 py-1.5 rounded-full hover:bg-gray-50 transition uppercase tracking-tighter">
+              Login
             </button>
           )}
         </div>
       </div>
-      <nav className="flex md:absolute md:left-1/2 md:-translate-x-1/2 md:top-5 gap-6 text-sm font-bold text-gray-600 overflow-x-auto px-4 pb-3 sm:px-8 md:px-0 md:pb-0 scrollbar-hide">
-        <Link href="/" className="hover:text-black transition-colors uppercase tracking-wide whitespace-nowrap">Home</Link>
-        <Link href="/music" className="hover:text-black transition-colors uppercase tracking-wide whitespace-nowrap">Music</Link>
-        <Link href="/albums" className="hover:text-black transition-colors uppercase tracking-wide whitespace-nowrap">Albums</Link>
-        <Link href="/artists" className="hover:text-black transition-colors uppercase tracking-wide whitespace-nowrap">Artists</Link>
+      
+      <nav className="flex items-center justify-center gap-6 text-xs font-black text-gray-500 overflow-x-auto px-4 pb-4 sm:px-8 border-t border-gray-50 pt-4 scrollbar-hide">
+        <Link href="/" className="hover:text-black transition-colors uppercase tracking-widest whitespace-nowrap px-2 py-1">Home</Link>
+        <Link href="/music" className="hover:text-black transition-colors uppercase tracking-widest whitespace-nowrap px-2 py-1">Music</Link>
+        <Link href="/albums" className="hover:text-black transition-colors uppercase tracking-widest whitespace-nowrap px-2 py-1">Albums</Link>
+        <Link href="/artists" className="hover:text-black transition-colors uppercase tracking-widest whitespace-nowrap px-2 py-1">Artists</Link>
       </nav>
     </header>
   );
