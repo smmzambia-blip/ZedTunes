@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { TopNav } from "@/components/layout/top-nav";
 import { Footer } from "@/components/layout/footer";
+import { SiteIdentity } from "@/components/layout/site-identity";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased flex flex-col h-screen bg-white text-black overflow-hidden relative font-sans`}>
+        <SiteIdentity />
         <TopNav />
         <main className="flex flex-1 overflow-hidden">
           <section className="flex-1 overflow-y-auto flex flex-col">

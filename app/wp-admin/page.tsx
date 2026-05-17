@@ -92,7 +92,8 @@ export default function AdminDashboard() {
 
   const [siteSettings, setSiteSettings] = useState({
     siteName: 'ZedTunes',
-    siteBio: "Zambia's hottest music platform"
+    siteBio: "Zambia's hottest music platform",
+    logoBase64: ''
   });
 
   const fetchSongs = async () => {
@@ -131,7 +132,8 @@ export default function AdminDashboard() {
         const data = docSnap.data();
         setSiteSettings({
           siteName: data.siteName || 'ZedTunes',
-          siteBio: data.siteBio || "Zambia's hottest music platform"
+          siteBio: data.siteBio || "Zambia's hottest music platform",
+          logoBase64: data.logoBase64 || ''
         });
       }
     } catch (e) {
@@ -155,6 +157,21 @@ export default function AdminDashboard() {
       handleFirestoreError(e, OperationType.WRITE, 'settings/site');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 200000) {
+        alert("Logo is too large. Please upload an image smaller than 200KB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSiteSettings(prev => ({ ...prev, logoBase64: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -547,6 +564,26 @@ export default function AdminDashboard() {
                   className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-black focus:ring-1 focus:ring-black"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Site Logo / Favicon</label>
+                <div className="flex items-center gap-4">
+                  {siteSettings.logoBase64 ? (
+                    <img src={siteSettings.logoBase64} alt="Logo Preview" className="w-12 h-12 rounded object-contain border border-gray-200" />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200">
+                      <ImageIcon size={20} />
+                    </div>
+                  )}
+                  <input 
+                    type="file" accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-500 mt-1">This will be used as the site logo and favicon. Square icons work best.</p>
+              </div>
+
               <div className="flex justify-end gap-3 mt-4">
                 <button type="button" onClick={() => setShowSiteSettingsModal(false)} className="px-5 py-2.5 rounded-lg font-bold text-gray-600 hover:bg-gray-100">Cancel</button>
                 <button type="submit" className="px-5 py-2.5 rounded-lg font-bold bg-black text-white hover:bg-gray-900">Save Settings</button>

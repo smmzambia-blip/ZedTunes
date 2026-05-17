@@ -3,14 +3,29 @@
 import Link from 'next/link';
 import { Search, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 export function TopNav() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [siteSettings, setSiteSettings] = useState<{ logoBase64?: string; siteName?: string } | null>(null);
 
   useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const docRef = doc(db, 'settings', 'site');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setSiteSettings(docSnap.data());
+        }
+      } catch (e) {
+        console.error("Failed to fetch settings", e);
+      }
+    };
+    fetchSettings();
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
@@ -39,8 +54,13 @@ export function TopNav() {
   return (
     <header className="flex flex-col bg-white shadow-sm z-40 border-b border-gray-100">
       <div className="pt-6 pb-2 flex flex-col items-center justify-center gap-2 px-4 sm:px-8 relative">
+        {siteSettings?.logoBase64 && (
+          <div className="w-16 h-16 mb-2">
+             <img src={siteSettings.logoBase64} alt="Site Logo" className="w-full h-full object-contain" />
+          </div>
+        )}
         <Link href="/" className="text-3xl font-black tracking-tighter text-[#39FF14] bg-black px-4 py-1.5 rounded-lg shadow-xl hover:scale-105 transition-transform flex-shrink-0">
-          ZED<span className="text-white">TUNES</span>
+          {siteSettings?.siteName?.toUpperCase().replace('TUNES', '') || 'ZED'}<span className="text-white">{siteSettings?.siteName?.toUpperCase().includes('TUNES') ? 'TUNES' : (siteSettings?.siteName ? '' : 'TUNES')}</span>
         </Link>
         <p className="text-[10px] sm:text-xs font-bold text-gray-400 italic tracking-widest uppercase">
           Zambia&apos;s Premier Music Excellence
