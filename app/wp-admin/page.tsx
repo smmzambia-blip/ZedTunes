@@ -253,8 +253,7 @@ export default function AdminDashboard() {
         console.log("Adding new document to 'songs'");
         await addDoc(collection(db, 'songs'), {
           ...dataToSave,
-          createdAt: serverTimestamp(),
-          views: '0'
+          createdAt: serverTimestamp()
         });
         alert("Post published successfully!");
       }

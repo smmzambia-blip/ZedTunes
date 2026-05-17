@@ -16,7 +16,7 @@ interface SongCardProps {
   type?: string;
 }
 
-export function SongCard({ id, title, artist, views, imageBase64, type }: SongCardProps) {
+export function SongCard({ id, title, artist, imageBase64, type }: SongCardProps) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -86,7 +86,6 @@ export function SongCard({ id, title, artist, views, imageBase64, type }: SongCa
       <div className="min-w-0">
         <div className="font-bold text-sm truncate text-gray-900 group-hover:text-blue-600 transition-colors">{title}</div>
         <div className="text-xs text-gray-500 truncate mt-0.5">{artist}</div>
-        {views && <div className="text-[10px] text-gray-400 mt-1">{views} streams</div>}
       </div>
     </Link>
   );

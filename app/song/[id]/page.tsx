@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Download, Heart, Play, Music, Layers, Clock, TrendingUp, Edit } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import Link from "next/link";
 
@@ -35,8 +35,6 @@ export default function SongPage({ params }: { params: { id: string } }) {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setSong({ id: docSnap.id, ...docSnap.data() } as Song);
-          // Increment views
-          updateDoc(docRef, { views: increment(1) });
         }
       } catch (e) {
         console.error("Error fetching song:", e);
@@ -111,7 +109,7 @@ export default function SongPage({ params }: { params: { id: string } }) {
                 <span className="bg-emerald-500 text-white text-[10px] font-black px-3 py-1 rounded-full tracking-widest uppercase">Single</span>
               )}
               <span className="text-gray-400 text-xs font-bold flex items-center gap-1 tracking-tight">
-                <Clock size={12} /> {song.views || '0'} streams
+                <Clock size={12} /> {(new Date()).toLocaleDateString()}
               </span>
             </div>
             <h1 className="text-4xl sm:text-6xl font-black mb-2 tracking-tight text-gray-900 leading-none">{song.title}</h1>
@@ -119,17 +117,31 @@ export default function SongPage({ params }: { params: { id: string } }) {
           </div>
 
           {!isAlbum && (
-            <div className="flex flex-wrap gap-4 mt-4">
-              <a 
-                href={song.archiveLink} target="_blank" rel="noopener noreferrer"
-                className="bg-black text-[#39FF14] px-10 py-4 rounded-full font-black hover:scale-105 transition flex items-center gap-3 shadow-lg shadow-black/10"
-              >
-                <Download size={22} />
-                FREE DOWNLOAD
-              </a>
-              <button className="w-14 h-14 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center hover:bg-gray-200 hover:text-red-500 transition shadow-sm border border-gray-200">
-                <Heart size={24} />
-              </button>
+            <div className="flex flex-col gap-6 mt-4">
+              {song.archiveLink && (
+                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Listen Preview</p>
+                  <audio 
+                    controls 
+                    className="w-full h-10 accent-black"
+                    src={song.archiveLink}
+                  >
+                    Your browser does not support the audio element.
+                  </audio>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-4">
+                <a 
+                  href={song.archiveLink} target="_blank" rel="noopener noreferrer"
+                  className="bg-black text-[#39FF14] px-10 py-4 rounded-full font-black hover:scale-105 transition flex items-center gap-3 shadow-lg shadow-black/10"
+                >
+                  <Download size={22} />
+                  FREE DOWNLOAD
+                </a>
+                <button className="w-14 h-14 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center hover:bg-gray-200 hover:text-red-500 transition shadow-sm border border-gray-200">
+                  <Heart size={24} />
+                </button>
+              </div>
             </div>
           )}
 
@@ -155,11 +167,20 @@ export default function SongPage({ params }: { params: { id: string } }) {
               <div key={index} className="px-8 py-5 flex items-center justify-between hover:bg-gray-50/80 transition-colors group">
                 <div className="flex items-center gap-6">
                   <span className="text-gray-300 font-bold w-4 text-sm group-hover:text-black transition-colors">{(index + 1).toString().padStart(2, '0')}</span>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 flex-1">
                     <button className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 group-hover:bg-[#39FF14] group-hover:text-black transition-all">
                       <Play size={16} fill="currentColor" />
                     </button>
-                    <span className="font-bold text-gray-900">{track.title}</span>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="font-bold text-gray-900 truncate">{track.title}</span>
+                      {track.url && (
+                        <audio 
+                          controls 
+                          className="w-full h-8 mt-2 scale-90 origin-left" 
+                          src={track.url}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
