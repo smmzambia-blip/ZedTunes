@@ -3,6 +3,8 @@ import { collection, getDocs } from 'firebase/firestore';
 import { NextResponse } from 'next/server';
 import { generateSlug } from '@/lib/slug';
 
+export const revalidate = 86400; // 24 hours
+
 export async function GET() {
   const baseUrl = 'https://zedtunez.vercel.app';
 

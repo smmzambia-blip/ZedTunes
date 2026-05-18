@@ -15,31 +15,37 @@ interface Song {
   archiveLink?: string;
 }
 
-export const dynamic = 'force-dynamic';
+import { unstable_cache } from 'next/cache';
 
-async function getSongs(category: string) {
-  try {
-    let q;
-    if (category === 'All') {
-      q = query(collection(db, 'songs'), where('category', '!=', 'Album'), orderBy('category'), orderBy('createdAt', 'desc'));
-    } else {
-      q = query(collection(db, 'songs'), where('category', '==', category), orderBy('createdAt', 'desc'));
+export const revalidate = 3600;
+
+const getSongs = unstable_cache(
+  async (category: string) => {
+    try {
+      let q;
+      if (category === 'All') {
+        q = query(collection(db, 'songs'), where('category', '!=', 'Album'), orderBy('category'), orderBy('createdAt', 'desc'));
+      } else {
+        q = query(collection(db, 'songs'), where('category', '==', category), orderBy('createdAt', 'desc'));
+      }
+      
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null)
+        } as unknown as Song;
+      });
+    } catch (e) {
+      console.error("Firestore fetching error:", e);
+      return [];
     }
-    
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null)
-      } as unknown as Song;
-    });
-  } catch (e) {
-    console.error(e);
-    return [];
-  }
-}
+  },
+  ['music-library'],
+  { revalidate: 3600 }
+);
 
 export default async function MusicPage({ searchParams }: { searchParams: { category?: string } }) {
   const activeCategory = searchParams.category || 'All';

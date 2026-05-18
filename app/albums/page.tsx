@@ -14,25 +14,31 @@ interface Song {
   archiveLink?: string;
 }
 
-export const dynamic = 'force-dynamic';
+import { unstable_cache } from 'next/cache';
 
-async function getAlbums() {
-  try {
-    const q = query(collection(db, 'songs'), where('category', '==', 'Album'), orderBy('createdAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null)
-      } as unknown as Song;
-    });
-  } catch (e) {
-    console.error(e);
-    return [];
-  }
-}
+export const revalidate = 3600;
+
+const getAlbums = unstable_cache(
+  async () => {
+    try {
+      const q = query(collection(db, 'songs'), where('category', '==', 'Album'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null)
+        } as unknown as Song;
+      });
+    } catch (e) {
+      console.error("Firestore fetching error:", e);
+      return [];
+    }
+  },
+  ['all-albums'],
+  { revalidate: 3600 }
+);
 
 export default async function AlbumsPage() {
   const albums = await getAlbums();

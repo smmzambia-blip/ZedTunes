@@ -5,6 +5,7 @@ import { TopNav } from "@/components/layout/top-nav";
 import { Footer } from "@/components/layout/footer";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { unstable_cache } from "next/cache";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,18 +24,22 @@ export const metadata: Metadata = {
   },
 };
 
-async function getSiteSettings() {
-  try {
-    const docRef = doc(db, 'settings', 'site');
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data();
+const getSiteSettings = unstable_cache(
+  async () => {
+    try {
+      const docRef = doc(db, 'settings', 'site');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data();
+      }
+    } catch (e) {
+      console.error("Failed to fetch settings on server", e);
     }
-  } catch (e) {
-    console.error("Failed to fetch settings on server", e);
-  }
-  return null;
-}
+    return null;
+  },
+  ['site-settings'],
+  { revalidate: 3600 } // Cache for 1 hour
+);
 
 export default async function RootLayout({
   children,

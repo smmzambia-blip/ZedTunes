@@ -8,6 +8,7 @@ import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, getDocs
 import { Upload, Trash2, Edit, Plus, Users, Music, X, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import { generateSlug } from '@/lib/slug';
+import { revalidateSpecificData, revalidateSettings } from '@/app/actions/revalidate';
 
 enum OperationType {
   CREATE = 'create',
@@ -151,6 +152,7 @@ export default function AdminDashboard() {
         ...siteSettings,
         updatedAt: serverTimestamp()
       });
+      await revalidateSettings();
       console.log("Settings saved successfully");
       alert("Site settings updated successfully!");
       setShowSiteSettingsModal(false);
@@ -269,6 +271,7 @@ export default function AdminDashboard() {
           ...dataToSave,
           updatedAt: serverTimestamp()
         });
+        await revalidateSpecificData(dataToSave.category === 'Album' ? 'album' : 'song', dataToSave.slug);
         alert("Post updated successfully!");
       } else {
         console.log("Adding new document to 'songs'");
@@ -276,6 +279,7 @@ export default function AdminDashboard() {
           ...dataToSave,
           createdAt: serverTimestamp()
         });
+        await revalidateSpecificData(dataToSave.category === 'Album' ? 'album' : 'song', dataToSave.slug);
         alert("Post published successfully!");
       }
       setShowUploadModal(false);
@@ -307,6 +311,7 @@ export default function AdminDashboard() {
           ...artistData,
           slug
         });
+        await revalidateSpecificData('artist', slug);
         alert("Artist updated successfully!");
       } else {
         await addDoc(collection(db, 'artists'), {
@@ -314,6 +319,7 @@ export default function AdminDashboard() {
           slug,
           createdAt: serverTimestamp()
         });
+        await revalidateSpecificData('artist', slug);
         alert("Artist added successfully!");
       }
       setShowArtistModal(false);
@@ -355,6 +361,7 @@ export default function AdminDashboard() {
     if (confirm("Are you sure you want to delete this track?")) {
       try {
         await deleteDoc(doc(db, 'songs', id));
+        await revalidateSpecificData('song');
         fetchSongs();
       } catch (e) {
         handleFirestoreError(e, OperationType.DELETE, `songs/${id}`);
@@ -366,6 +373,7 @@ export default function AdminDashboard() {
     if (confirm("Are you sure you want to delete this artist?")) {
       try {
         await deleteDoc(doc(db, 'artists', id));
+        await revalidateSpecificData('artist');
         fetchArtists();
       } catch (e) {
         handleFirestoreError(e, OperationType.DELETE, `artists/${id}`);

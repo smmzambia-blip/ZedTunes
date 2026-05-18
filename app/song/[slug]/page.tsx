@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { doc, getDoc, collection, query, where, getDocs, updateDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { Metadata } from "next";
 import { generateSlug } from "@/lib/slug";
 import { permanentRedirect } from "next/navigation";
@@ -9,57 +9,62 @@ interface PageProps {
   params: { slug: string };
 }
 
-import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
-const getSongData = cache(async (slug: string) => {
-  try {
-    // 1. Try fetching by slug
-    const q = query(collection(db, "songs"), where("slug", "==", slug));
-    const slugSnap = await getDocs(q);
+const getSongData = unstable_cache(
+  async (slug: string) => {
+    try {
+      // 1. Try fetching by slug
+      const q = query(collection(db, "songs"), where("slug", "==", slug));
+      const slugSnap = await getDocs(q);
 
-    if (!slugSnap.empty) {
-      const docData = slugSnap.docs[0];
-      const data = docData.data();
-      // Ensure date is serializable
-      const songData: SongType = {
-        id: docData.id,
-        title: data.title || "",
-        artist: data.artist || "",
-        category: data.category || "Single",
-        slug: data.slug,
-        views: data.views,
-        imageBase64: data.imageBase64,
-        description: data.description,
-        archiveLink: data.archiveLink,
-        tracks: data.tracks,
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null)
-      };
-      return { song: songData, needsRedirect: null };
-    }
-
-    // 2. Fallback to ID
-    const docRef = doc(db, "songs", slug);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      let actualSlug = data.slug;
-      if (!actualSlug) {
-        actualSlug = generateSlug(data.title);
-        await updateDoc(docRef, { slug: actualSlug });
+      if (!slugSnap.empty) {
+        const docData = slugSnap.docs[0];
+        const data = docData.data();
+        // Ensure date is serializable
+        const songData: SongType = {
+          id: docData.id,
+          title: data.title || "",
+          artist: data.artist || "",
+          category: data.category || "Single",
+          slug: data.slug,
+          views: data.views,
+          imageBase64: data.imageBase64,
+          description: data.description,
+          archiveLink: data.archiveLink,
+          tracks: data.tracks,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null)
+        };
+        return { song: songData, needsRedirect: null };
       }
-      const prefix = data.category === "Album" ? "album" : "song";
-      return { song: null, needsRedirect: `/${prefix}/${actualSlug}` };
+
+      // 2. Fallback to ID
+      const docRef = doc(db, "songs", slug);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        let actualSlug = data.slug;
+        if (!actualSlug) {
+          actualSlug = generateSlug(data.title);
+          // Only update on server if possible, but updateDoc might be blocked in read-only cache context?
+          // unstable_cache functions should be pure-ish.
+        }
+        const prefix = data.category === "Album" ? "album" : "song";
+        return { song: null, needsRedirect: `/${prefix}/${actualSlug}` };
+      }
+      
+      return { song: null, needsRedirect: null };
+    } catch (error) {
+      console.error("Error fetching song data:", error);
+      return { song: null, needsRedirect: null };
     }
-    
-    return { song: null, needsRedirect: null };
-  } catch (error) {
-    console.error("Error fetching song data:", error);
-    return { song: null, needsRedirect: null };
-  }
-});
+  },
+  ['song-data'],
+  { revalidate: 3600 }
+);
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { song } = await getSongData(params.slug);
