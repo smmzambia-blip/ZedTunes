@@ -207,17 +207,6 @@ export default function SongClient({ song }: { song: Song }) {
           </div>
         </div>
       )}
-
-      <div className="mt-24 border-t border-gray-100 pt-16">
-        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-8 text-center">More from {song.artist}</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
-           {[...Array(4)].map((_, i) => (
-             <div key={i} className="aspect-square bg-gray-50 rounded-2xl border border-dashed border-gray-200 flex items-center justify-center text-gray-200">
-               <Music size={32} />
-             </div>
-           ))}
-        </div>
-      </div>
     </div>
   );
 }
