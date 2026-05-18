@@ -1,9 +1,8 @@
 import { db } from "@/lib/firebase";
-import { doc, getDoc, collection, query, where, getDocs, updateDoc } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { Metadata } from "next";
 import { generateSlug } from "@/lib/slug";
 import { permanentRedirect } from "next/navigation";
-import SongClient, { Song as SongType } from "../../song/[slug]/SongClient";
 
 interface PageProps {
   params: { slug: string };
@@ -11,85 +10,120 @@ interface PageProps {
 
 async function getAlbumData(slug: string) {
   try {
-    // 1. Try fetching by slug
-    const q = query(collection(db, "songs"), where("slug", "==", slug), where("category", "==", "Album"));
+    // Try fetching by slug
+    const q = query(collection(db, "songs"), where("slug", "==", slug));
     const slugSnap = await getDocs(q);
 
     if (!slugSnap.empty) {
       const docData = slugSnap.docs[0];
       const data = docData.data();
-      const albumData: SongType = {
-        id: docData.id,
-        title: data.title || "",
-        artist: data.artist || "",
-        category: data.category || "Album",
-        slug: data.slug,
-        views: data.views,
-        imageBase64: data.imageBase64,
-        description: data.description,
-        archiveLink: data.archiveLink,
-        tracks: data.tracks,
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt
+      return {
+        album: {
+          id: docData.id,
+          title: data.title || "",
+          artist: data.artist || "",
+          category: data.category || "Album",
+          slug: data.slug,
+          imageBase64: data.imageBase64,
+          description: data.description,
+          tracks: data.tracks,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt
+        },
+        needsRedirect: null
       };
-      return { disc: albumData, needsRedirect: null };
     }
 
-    // 2. Fallback to ID
-    const docRef = doc(db, "songs", slug);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      const actualSlug = data.slug || generateSlug(data.title);
-      if (!data.slug) await updateDoc(docRef, { slug: actualSlug });
-
-      if (data.category !== "Album") {
-          return { disc: null, needsRedirect: `/song/${actualSlug}` };
-      }
-      return { disc: null, needsRedirect: `/album/${actualSlug}` };
-    }
-    
-    return { disc: null, needsRedirect: null };
+    return { album: null, needsRedirect: null };
   } catch (error) {
     console.error("Error fetching album data:", error);
-    return { disc: null, needsRedirect: null };
+    return { album: null, needsRedirect: null };
   }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { disc } = await getAlbumData(params.slug);
-  if (!disc) return { title: "Album Not Found" };
+  const { album } = await getAlbumData(params.slug);
+  if (!album) return { title: "Album Not Found" };
 
   return {
-    title: `${disc.title} (Album) - ${disc.artist} | ZedTunez`,
-    description: disc.description || `Download the full album ${disc.title} by ${disc.artist} on ZedTunez. Zambian local hits.`,
+    title: `${album.title} - ${album.artist} | ZedTunez`,
+    description: album.description || `Download ${album.title} by ${album.artist} on ZedTunez. Zambian music excellence.`,
     openGraph: {
-      title: `${disc.title} - Full Album by ${disc.artist}`,
-      description: disc.description,
-      images: disc.imageBase64 ? [disc.imageBase64] : [],
+      title: `${album.title} by ${album.artist}`,
+      description: album.description,
+      images: album.imageBase64 ? [album.imageBase64] : [],
     },
   };
 }
 
 export default async function AlbumPage({ params }: PageProps) {
-  const { disc, needsRedirect } = await getAlbumData(params.slug);
+  const { album } = await getAlbumData(params.slug);
 
-  if (needsRedirect) {
-    permanentRedirect(needsRedirect);
-  }
-
-  if (!disc) {
+  if (!album) {
     return (
       <div className="max-w-4xl mx-auto p-12 text-center">
         <h1 className="text-2xl font-bold text-gray-900">Album not found</h1>
-        <p className="text-gray-500 mt-2">The collection you are looking for does not exist or has been removed.</p>
+        <p className="text-gray-500 mt-2">The album you are looking for does not exist or has been removed.</p>
         <div className="mt-8">
-            <a href="/albums" className="text-blue-600 font-bold">Back to Albums</a>
+          <a href="/" className="text-blue-600 font-bold">Go Home</a>
         </div>
       </div>
     );
   }
 
-  // Casting disc as any temporarily but with a comment to fix any related types if needed
-  return <SongClient song={disc} />;
+  return (
+    <div className="max-w-5xl mx-auto py-12 px-4 sm:px-8">
+      <div className="flex flex-col md:flex-row gap-12 items-start mb-16">
+        <div className="w-full md:w-80 aspect-square bg-gray-100 rounded-3xl shadow-2xl overflow-hidden flex-shrink-0">
+          {album.imageBase64 && (
+            <img 
+              src={album.imageBase64}
+              alt={album.title}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          )}
+        </div>
+
+        <div className="flex flex-col gap-6 w-full">
+          <div>
+            <h1 className="text-4xl sm:text-6xl font-black mb-2 tracking-tight text-gray-900 leading-none">
+              {album.title}
+            </h1>
+            <p className="text-2xl font-bold text-gray-400">{album.artist}</p>
+          </div>
+
+          {album.description && (
+            <p className="text-gray-600 text-lg italic">"{album.description}"</p>
+          )}
+        </div>
+      </div>
+
+      {album.tracks && album.tracks.length > 0 && (
+        <div className="mt-12 bg-white rounded-[32px] border border-gray-100 shadow-xl overflow-hidden">
+          <div className="bg-gray-50 px-8 py-6 border-b border-gray-100">
+            <h2 className="text-2xl font-black tracking-tight">
+              Tracklist <span className="text-gray-400 text-sm ml-2 font-medium">({album.tracks.length} songs)</span>
+            </h2>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {album.tracks.map((track, index) => (
+              <div key={index} className="px-8 py-5">
+                <div className="flex items-center gap-4">
+                  <span className="text-gray-300 font-bold w-4 text-sm">{(index + 1).toString().padStart(2, '0')}</span>
+                  <span className="font-bold text-gray-900">{track.title}</span>
+                </div>
+                {track.url && (
+                  <audio 
+                    controls 
+                    className="w-full h-8 mt-4"
+                    src={track.url}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
