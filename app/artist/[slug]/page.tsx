@@ -30,7 +30,7 @@ async function getArtistData(slug: string) {
         id: songs[0]?.id || slug,
         name: songs[0]?.artist || slug,
         slug: slug,
-        songCount: songs.length
+        songCount: songs.length,
         bio: ""
       },
       songs
