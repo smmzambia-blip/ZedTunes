@@ -77,8 +77,10 @@ export default async function AlbumPage({ params }: PageProps) {
             <img 
               src={album.imageBase64}
               alt={album.title}
+              width={500}
+              height={500}
               className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
+              unoptimized
             />
           )}
         </div>
