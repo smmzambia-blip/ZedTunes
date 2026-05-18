@@ -74,7 +74,7 @@ export default async function AlbumPage({ params }: PageProps) {
       <div className="flex flex-col md:flex-row gap-12 items-start mb-16">
         <div className="w-full md:w-80 aspect-square bg-gray-100 rounded-3xl shadow-2xl overflow-hidden flex-shrink-0">
           {album.imageBase64 && (
-            <img 
+            <Image 
               src={album.imageBase64}
               alt={album.title}
               width={500}
