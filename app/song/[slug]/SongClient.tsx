@@ -103,7 +103,22 @@ export default function SongClient({ song }: { song: Song }) {
             <p className="text-2xl font-bold text-gray-400 hover:text-black transition-colors cursor-pointer inline-block">{song.artist}</p>
           </div>
 
-          {!isAlbum && (
+          {isAlbum ? (
+            <div className="flex flex-wrap gap-4 mt-4">
+              {song.archiveLink && (
+                <button 
+                  onClick={() => song.archiveLink && downloadFile(song.archiveLink, `${song.title} - ${song.artist}.zip`)}
+                  className="bg-black text-[#39FF14] px-10 py-4 rounded-full font-black hover:scale-105 transition flex items-center gap-3 shadow-lg shadow-black/10"
+                >
+                  <Download size={22} />
+                  DOWNLOAD FULL ALBUM
+                </button>
+              )}
+              <button className="w-14 h-14 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center hover:bg-gray-200 hover:text-red-500 transition shadow-sm border border-gray-200">
+                <Heart size={24} />
+              </button>
+            </div>
+          ) : (
             <div className="flex flex-col gap-6 mt-4">
               {song.archiveLink && (
                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
@@ -147,7 +162,14 @@ export default function SongClient({ song }: { song: Song }) {
         <div className="mt-12 bg-white rounded-[32px] border border-gray-100 shadow-xl overflow-hidden">
           <div className="bg-gray-50 px-8 py-6 border-b border-gray-100 flex items-center justify-between">
              <h2 className="text-2xl font-black tracking-tight">Tracklist <span className="text-gray-400 text-sm ml-2 font-medium">({song.tracks.length} songs)</span></h2>
-             <button className="text-sm font-bold text-blue-600 hover:underline">Download Full Album</button>
+             {song.archiveLink && (
+               <button 
+                onClick={() => downloadFile(song.archiveLink!, `${song.title} - ${song.artist}.zip`)}
+                className="text-sm font-bold text-blue-600 hover:underline"
+               >
+                Download Full Album
+               </button>
+             )}
           </div>
           <div className="divide-y divide-gray-50">
             {song.tracks.map((track, index) => (

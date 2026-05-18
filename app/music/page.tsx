@@ -1,12 +1,8 @@
-"use client";
-
-import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { SongCard } from '@/components/ui/song-card';
 import { Music } from 'lucide-react';
-
-import { Timestamp } from 'firebase/firestore';
+import Link from 'next/link';
 
 interface Song {
   id: string;
@@ -16,41 +12,34 @@ interface Song {
   views?: string;
   imageBase64?: string;
   category?: string;
-  createdAt?: Timestamp;
   archiveLink?: string;
 }
 
-export default function MusicPage() {
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState('All');
+async function getSongs(category: string) {
+  try {
+    let q;
+    if (category === 'All') {
+      q = query(collection(db, 'songs'), where('category', '!=', 'Album'), orderBy('category'), orderBy('createdAt', 'desc'));
+    } else {
+      q = query(collection(db, 'songs'), where('category', '==', category), orderBy('createdAt', 'desc'));
+    }
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Song));
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
 
+export default async function MusicPage({ searchParams }: { searchParams: { category?: string } }) {
+  const activeCategory = searchParams.category || 'All';
+  const songs = await getSongs(activeCategory);
+  
   const categories = ['All', 'Single', 'Gospel', 'Hip Hop', 'Zambian', 'RnB', 'Dancehall', 'Afrobeat', 'Kalindula'];
-
-  useEffect(() => {
-    const fetchSongs = async () => {
-      try {
-        let q;
-        if (activeCategory === 'All') {
-          q = query(collection(db, 'songs'), where('category', '!=', 'Album'), orderBy('category'), orderBy('createdAt', 'desc'));
-        } else {
-          q = query(collection(db, 'songs'), where('category', '==', activeCategory), orderBy('createdAt', 'desc'));
-        }
-        
-        const snapshot = await getDocs(q);
-        const fetchedSongs: Song[] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Song));
-        setSongs(fetchedSongs);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSongs();
-  }, [activeCategory]);
 
   return (
     <div className="py-8">
@@ -67,27 +56,18 @@ export default function MusicPage() {
         
         <div className="flex bg-gray-100 p-1 rounded-xl overflow-x-auto scrollbar-hide">
           {categories.map((cat) => (
-            <button
+            <Link
               key={cat}
-              onClick={() => setActiveCategory(cat)}
+              href={`/music?category=${cat}`}
               className={`px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeCategory === cat ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-black'}`}
             >
               {cat}
-            </button>
+            </Link>
           ))}
         </div>
       </div>
 
-      {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8 gap-4">
-          {[...Array(14)].map((_, i) => (
-            <div key={i} className="animate-pulse flex flex-col gap-3">
-              <div className="bg-gray-100 rounded-2xl aspect-square"></div>
-              <div className="h-3 w-3/4 bg-gray-100 rounded"></div>
-            </div>
-          ))}
-        </div>
-      ) : songs.length > 0 ? (
+      {songs.length > 0 ? (
         <>
           <h3 className="text-xl font-black mb-8 tracking-tight uppercase">{activeCategory === 'All' ? 'All Releases' : activeCategory}</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8 gap-4">

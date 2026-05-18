@@ -19,18 +19,3 @@ try {
 
 export const db = firestoreDb;
 export const auth = getAuth(app);
-
-// Validation check as per firebase-integration skill
-if (typeof window !== 'undefined') {
-  import('firebase/firestore').then(({ doc, getDocFromServer }) => {
-    const testConn = async () => {
-      try {
-        // Try getting from server to verify connection
-        await getDocFromServer(doc(firestoreDb, '_health_', 'check'));
-      } catch (error) {
-        console.warn("Firestore connection check:", error);
-      }
-    };
-    testConn();
-  });
-}

@@ -1,12 +1,7 @@
-"use client";
-
-import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { SongCard } from '@/components/ui/song-card';
 import { Layers } from 'lucide-react';
-
-import { Timestamp } from 'firebase/firestore';
 
 interface Song {
   id: string;
@@ -16,32 +11,25 @@ interface Song {
   views?: string;
   imageBase64?: string;
   category?: string;
-  createdAt?: Timestamp;
   archiveLink?: string;
 }
 
-export default function AlbumsPage() {
-  const [albums, setAlbums] = useState<Song[]>([]);
-  const [loading, setLoading] = useState(true);
+async function getAlbums() {
+  try {
+    const q = query(collection(db, 'songs'), where('category', '==', 'Album'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Song));
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
 
-  useEffect(() => {
-    const fetchAlbums = async () => {
-      try {
-        const q = query(collection(db, 'songs'), where('category', '==', 'Album'), orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
-        const fetchedAlbums: Song[] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Song));
-        setAlbums(fetchedAlbums);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAlbums();
-  }, []);
+export default async function AlbumsPage() {
+  const albums = await getAlbums();
 
   return (
     <div className="py-8">
@@ -55,13 +43,7 @@ export default function AlbumsPage() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8 gap-4">
-          {[...Array(14)].map((_, i) => (
-            <div key={i} className="animate-pulse bg-gray-100 rounded-2xl aspect-square"></div>
-          ))}
-        </div>
-      ) : albums.length > 0 ? (
+      {albums.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8 gap-4">
           {albums.map((album) => (
             <SongCard key={album.id} {...album} />

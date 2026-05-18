@@ -1,14 +1,9 @@
-"use client";
-
-import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { SongCard } from '@/components/ui/song-card';
 import Link from 'next/link';
 import Image from 'next/image';
 import { generateSlug } from '@/lib/slug';
-
-import { Timestamp } from 'firebase/firestore';
 
 interface Song {
   id: string;
@@ -18,14 +13,26 @@ interface Song {
   views?: string;
   imageBase64?: string;
   category?: string;
-  createdAt?: Timestamp;
   archiveLink?: string;
 }
 
-export default function Home() {
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [loading, setLoading] = useState(true);
+async function getSongs() {
+  try {
+    const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'), limit(16));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Song));
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
 
+export default async function Home() {
+  const songs = await getSongs();
+  
   const getSongHref = (song: Song) => {
     if (!song) return '#';
     const slug = song.slug || generateSlug(song.title);
@@ -33,28 +40,9 @@ export default function Home() {
     return `/${prefix}/${slug}`;
   };
 
-  useEffect(() => {
-    const fetchSongs = async () => {
-      try {
-        const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'), limit(16));
-        const snapshot = await getDocs(q);
-        const fetchedSongs: Song[] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Song));
-        setSongs(fetchedSongs);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSongs();
-  }, []);
-
   const featured = songs[0];
   const hotReleases = songs.slice(1, 6);
-  const latestUploads = songs; // Show all to be safe, or at least a larger set
+  const latestUploads = songs;
 
   return (
     <div className="flex flex-col gap-12">
@@ -62,9 +50,7 @@ export default function Home() {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Main Hero (Featured) */}
         <div className="lg:w-2/3">
-          {loading ? (
-            <div className="aspect-[16/9] w-full bg-gray-100 rounded-[2rem] animate-pulse" />
-          ) : featured ? (
+          {featured ? (
             <Link href={getSongHref(featured)} className="group relative block aspect-[16/9] w-full rounded-[2.5rem] overflow-hidden bg-black shadow-2xl">
                {featured.imageBase64 && (
                  <Image 
@@ -85,7 +71,11 @@ export default function Home() {
                   <p className="text-[#39FF14]/80 text-[10px] font-black uppercase tracking-[0.2em]">Click to listen</p>
                </div>
             </Link>
-          ) : null}
+          ) : (
+             <div className="aspect-[16/9] w-full bg-gray-50 rounded-[2.5rem] flex items-center justify-center text-gray-300 italic border border-dashed border-gray-200">
+               No featured music yet
+             </div>
+          )}
         </div>
 
         {/* Hot Releases Sidebar */}
@@ -96,9 +86,7 @@ export default function Home() {
               <Link href="/music" className="text-[10px] text-blue-600 font-black uppercase tracking-widest hover:underline">View All</Link>
             </h2>
             <div className="flex flex-col gap-4">
-              {loading ? (
-                [...Array(5)].map((_, i) => <div key={i} className="h-20 bg-gray-200/50 rounded-2xl animate-pulse" />)
-              ) : hotReleases.map((song) => (
+              {hotReleases.length > 0 ? hotReleases.map((song) => (
                 <Link key={song.id} href={getSongHref(song)} className="flex items-center gap-4 p-2 rounded-2xl hover:bg-white hover:shadow-sm transition-all group">
                   <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shadow-sm shrink-0 relative">
                     {song.imageBase64 && (
@@ -117,7 +105,9 @@ export default function Home() {
                     <p className="text-xs text-gray-500 font-bold truncate opacity-80">{song.artist}</p>
                   </div>
                 </Link>
-              ))}
+              )) : (
+                <p className="text-sm text-gray-400 italic text-center py-12">More releases coming soon</p>
+              )}
             </div>
           </div>
         </div>
@@ -130,20 +120,15 @@ export default function Home() {
           <Link href="/music" className="text-xs font-black text-gray-400 uppercase tracking-widest hover:text-black">Explore All</Link>
         </div>
         
-        {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-6">
-            {[...Array(7)].map((_, i) => (
-              <div key={i} className="flex flex-col gap-3 animate-pulse">
-                <div className="aspect-square bg-gray-100 rounded-2xl" />
-                <div className="h-3 w-3/4 bg-gray-100 rounded" />
-              </div>
-            ))}
-          </div>
-        ) : (
+        {latestUploads.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-8 gap-4">
             {latestUploads.map((song) => (
               <SongCard key={song.id} {...song} />
             ))}
+          </div>
+        ) : (
+          <div className="py-24 text-center">
+            <p className="text-gray-400 font-bold uppercase tracking-widest">No music uploaded yet</p>
           </div>
         )}
       </div>
