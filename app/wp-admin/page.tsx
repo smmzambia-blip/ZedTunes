@@ -42,7 +42,9 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
     path
   };
   console.error('Firestore Error: ', errInfo);
-  alert(`Error during ${operationType} on ${path || 'unknown'}: ${errInfo.error}`);
+  if (operationType !== OperationType.LIST) {
+    alert(`Error during ${operationType} on ${path || 'unknown'}: ${errInfo.error}`);
+  }
 }
 
 interface Song {
@@ -98,6 +100,8 @@ export default function AdminDashboard() {
     logoBase64: ''
   });
 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const fetchSongs = async () => {
     try {
       const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'));
@@ -107,8 +111,10 @@ export default function AdminDashboard() {
         ...doc.data()
       } as Song));
       setSongs(fetchedSongs);
+      setErrorMsg(null);
     } catch (e) {
       handleFirestoreError(e, OperationType.LIST, 'songs');
+      setErrorMsg("Error loading songs. " + (e instanceof Error ? e.message : String(e)));
     }
   };
 
@@ -123,6 +129,7 @@ export default function AdminDashboard() {
       setArtists(fetchedArtists);
     } catch (e) {
       handleFirestoreError(e, OperationType.LIST, 'artists');
+      if (!errorMsg) setErrorMsg("Error loading artists. " + (e instanceof Error ? e.message : String(e)));
     }
   };
 
@@ -220,6 +227,7 @@ export default function AdminDashboard() {
       setLoading(false);
     });
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -430,6 +438,14 @@ export default function AdminDashboard() {
           </button>
         </div>
       </div>
+
+      {errorMsg && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl mb-8 flex flex-col gap-2">
+          <h2 className="font-bold">Database Quota Error</h2>
+          <p className="text-sm">{errorMsg}</p>
+          <p className="text-sm">Because limits are exceeded, list items may not show up below, but your website&apos;s cached public pages still work until caches expire. Try returning later or checking the database rules/quotas.</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <button 
