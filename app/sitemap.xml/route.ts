@@ -1,6 +1,7 @@
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { NextResponse } from 'next/server';
+import { generateSlug } from '@/lib/slug';
 
 export async function GET() {
   const baseUrl = 'https://zedtunez.vercel.app';
@@ -52,6 +53,7 @@ ${staticRoutes.map(route => `  <url>
     <priority>${route === '' ? '1.0' : '0.8'}</priority>
   </url>`).join('\n')}
 ${songsData.map(song => {
+  const slug = song.slug || generateSlug(song.title);
   const prefix = song.category === 'Album' ? 'album' : 'song';
   return `  <url>
     <loc>${baseUrl}/${prefix}/${slug}</loc>

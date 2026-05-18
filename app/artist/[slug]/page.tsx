@@ -1,7 +1,9 @@
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc } from "firebase/firestore";
 import { Metadata } from "next";
-import ArtistClient from "./ArtistClient";
+import { generateSlug } from "@/lib/slug";
+import { permanentRedirect } from "next/navigation";
+import ArtistClient, { Artist as ArtistType, Song as SongType } from "./ArtistClient";
 
 interface PageProps {
   params: { slug: string };
@@ -9,62 +11,95 @@ interface PageProps {
 
 async function getArtistData(slug: string) {
   try {
-    // Fetch all songs by this artist using slug
-    const q = query(collection(db, "songs"), where("artist", "==", slug));
-    const snapshot = await getDocs(q);
+    // 1. Try fetching by slug
+    const qArtist = query(collection(db, "artists"), where("slug", "==", slug));
+    const slugSnap = await getDocs(qArtist);
 
-    if (snapshot.empty) return { artist: null, songs: [] };
+    if (!slugSnap.empty) {
+      const docData = slugSnap.docs[0];
+      const data = docData.data();
+      const artistData: ArtistType = {
+        id: docData.id,
+        name: data.name || "",
+        bio: data.bio || "",
+        slug: data.slug,
+        imageBase64: data.imageBase64
+      };
+      
+      // Fetch songs for this artist
+      const qSongs = query(
+        collection(db, 'songs'), 
+        where('artist', '==', artistData.name),
+        orderBy('createdAt', 'desc')
+      );
+      const songsSnapshot = await getDocs(qSongs);
+      const fetchedSongs: SongType[] = songsSnapshot.docs.map(doc => {
+        const sdata = doc.data();
+        return {
+          id: doc.id,
+          title: sdata.title || "",
+          artist: sdata.artist || "",
+          category: sdata.category,
+          slug: sdata.slug,
+          imageBase64: sdata.imageBase64,
+          archiveLink: sdata.archiveLink,
+          createdAt: sdata.createdAt?.toDate ? sdata.createdAt.toDate().toISOString() : sdata.createdAt
+        };
+      });
 
-    const songs = snapshot.docs.map(doc => ({
-      id: doc.id,
-      title: doc.data().title || "",
-      artist: doc.data().artist || "",
-      slug: doc.data().slug,
-      imageBase64: doc.data().imageBase64,
-      category: doc.data().category,
-      createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toISOString() : doc.data().createdAt
-    }));
+      return { artist: artistData, songs: fetchedSongs, needsRedirect: null };
+    }
 
-    return {
-      artist: {
-        id: songs[0]?.id || slug,
-        name: songs[0]?.artist || slug,
-        slug: slug,
-        songCount: songs.length,
-        bio: ""
-      },
-      songs
-    };
+    // 2. Fallback to ID
+    const docRef = doc(db, 'artists', slug);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      let actualSlug = data.slug;
+      if (!actualSlug) {
+        actualSlug = generateSlug(data.name);
+        await updateDoc(docRef, { slug: actualSlug });
+      }
+      return { artist: null, songs: [], needsRedirect: `/artist/${actualSlug}` };
+    }
+
+    return { artist: null, songs: [], needsRedirect: null };
   } catch (error) {
     console.error("Error fetching artist data:", error);
-    return { artist: null, songs: [] };
+    return { artist: null, songs: [], needsRedirect: null };
   }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { artist, songs } = await getArtistData(params.slug);
+  const { artist } = await getArtistData(params.slug);
   if (!artist) return { title: "Artist Not Found" };
 
   return {
-    title: `${artist.name} - ${songs.length} songs | ZedTunez`,
-    description: `Listen and download music from ${artist.name} on ZedTunez. Zambian music excellence.`,
+    title: `${artist.name} - Zambian Artist | ZedTunez`,
+    description: artist.bio || `Explore music and albums by ${artist.name} on ZedTunez. Profile and discography.`,
     openGraph: {
-      title: `${artist.name}`,
-      description: `${songs.length} songs available`,
+      title: `${artist.name} Official Profile`,
+      description: artist.bio,
+      images: artist.imageBase64 ? [artist.imageBase64] : [],
     },
   };
 }
 
 export default async function ArtistPage({ params }: PageProps) {
-  const { artist, songs } = await getArtistData(params.slug);
+  const { artist, songs, needsRedirect } = await getArtistData(params.slug);
+
+  if (needsRedirect) {
+    permanentRedirect(needsRedirect);
+  }
 
   if (!artist) {
     return (
-      <div className="max-w-4xl mx-auto p-12 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Artist not found</h1>
-        <p className="text-gray-500 mt-2">The artist you are looking for does not exist.</p>
+      <div className="py-20 text-center">
+        <h1 className="text-2xl font-bold">Artist not found</h1>
+        <p className="text-gray-500">The artist you are looking for does not exist.</p>
         <div className="mt-8">
-          <a href="/" className="text-blue-600 font-bold">Go Home</a>
+            <a href="/artists" className="text-blue-600 font-bold">All Artists</a>
         </div>
       </div>
     );
