@@ -9,7 +9,11 @@ interface PageProps {
   params: { slug: string };
 }
 
-async function getAlbumData(slug: string) {
+import { cache } from 'react';
+
+export const dynamic = 'force-dynamic';
+
+const getAlbumData = cache(async (slug: string) => {
   try {
     // 1. Try fetching by slug
     const q = query(collection(db, "songs"), where("slug", "==", slug), where("category", "==", "Album"));
@@ -29,7 +33,7 @@ async function getAlbumData(slug: string) {
         description: data.description,
         archiveLink: data.archiveLink,
         tracks: data.tracks,
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null)
       };
       return { disc: albumData, needsRedirect: null };
     }
@@ -54,7 +58,7 @@ async function getAlbumData(slug: string) {
     console.error("Error fetching album data:", error);
     return { disc: null, needsRedirect: null };
   }
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { disc } = await getAlbumData(params.slug);

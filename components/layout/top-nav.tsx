@@ -7,31 +7,40 @@ import { auth, db } from '@/lib/firebase';
 import { signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
-export function TopNav() {
+export function TopNav({ initialSettings }: { initialSettings?: { siteName?: string; logoBase64?: string } | null }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [siteSettings, setSiteSettings] = useState<{ logoBase64?: string; siteName?: string } | null>(null);
+  const [siteSettings, setSiteSettings] = useState<{ logoBase64?: string; siteName?: string } | null>(initialSettings || null);
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const docRef = doc(db, 'settings', 'site');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setSiteSettings(docSnap.data());
+    // If we have settings, update document title
+    if (siteSettings?.siteName) {
+      document.title = siteSettings.siteName;
+    }
+
+    if (!initialSettings) {
+      const fetchSettings = async () => {
+        try {
+          const docRef = doc(db, 'settings', 'site');
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setSiteSettings(data);
+            if (data.siteName) document.title = data.siteName;
+          }
+        } catch (e) {
+          console.error("Failed to fetch settings", e);
         }
-      } catch (e) {
-        console.error("Failed to fetch settings", e);
-      }
-    };
-    fetchSettings();
+      };
+      fetchSettings();
+    }
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
     return () => unsubscribe();
-  }, []);
+  }, [initialSettings, siteSettings?.siteName]);
 
   const handleLogout = async () => {
     try {

@@ -9,7 +9,11 @@ interface PageProps {
   params: { slug: string };
 }
 
-async function getArtistData(slug: string) {
+import { cache } from 'react';
+
+export const dynamic = 'force-dynamic';
+
+const getArtistData = cache(async (slug: string) => {
   try {
     // 1. Try fetching by slug
     const qArtist = query(collection(db, "artists"), where("slug", "==", slug));
@@ -43,7 +47,7 @@ async function getArtistData(slug: string) {
           slug: sdata.slug,
           imageBase64: sdata.imageBase64,
           archiveLink: sdata.archiveLink,
-          createdAt: sdata.createdAt?.toDate ? sdata.createdAt.toDate().toISOString() : sdata.createdAt
+          createdAt: sdata.createdAt?.toDate ? sdata.createdAt.toDate().toISOString() : (sdata.createdAt || null)
         };
       });
 
@@ -69,7 +73,7 @@ async function getArtistData(slug: string) {
     console.error("Error fetching artist data:", error);
     return { artist: null, songs: [], needsRedirect: null };
   }
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { artist } = await getArtistData(params.slug);

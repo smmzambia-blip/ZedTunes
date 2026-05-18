@@ -5,15 +5,18 @@ import firebaseConfig from '../firebase-applet-config.json';
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Use initializeFirestore with long polling for better connectivity in proxied environments
+// Use simpler initialization on server, keep long polling on client
 let firestoreDb;
-try {
-  firestoreDb = initializeFirestore(app, {
-    experimentalForceLongPolling: true,
-    experimentalAutoDetectLongPolling: true,
-  }, firebaseConfig.firestoreDatabaseId);
-} catch {
-  // If already initialized or other error, get the existing instance with correct database ID
+if (typeof window !== 'undefined') {
+  try {
+    firestoreDb = initializeFirestore(app, {
+      experimentalForceLongPolling: true,
+      experimentalAutoDetectLongPolling: true,
+    }, firebaseConfig.firestoreDatabaseId);
+  } catch {
+    firestoreDb = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+  }
+} else {
   firestoreDb = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 }
 

@@ -266,7 +266,8 @@ export default function AdminDashboard() {
       if (editingId) {
         console.log("Updating document: ", editingId);
         await updateDoc(doc(db, 'songs', editingId), {
-          ...dataToSave
+          ...dataToSave,
+          updatedAt: serverTimestamp()
         });
         alert("Post updated successfully!");
       } else {

@@ -15,6 +15,8 @@ interface Song {
   archiveLink?: string;
 }
 
+export const dynamic = 'force-dynamic';
+
 async function getSongs(category: string) {
   try {
     let q;
@@ -25,10 +27,14 @@ async function getSongs(category: string) {
     }
     
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Song));
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null)
+      } as unknown as Song;
+    });
   } catch (e) {
     console.error(e);
     return [];
