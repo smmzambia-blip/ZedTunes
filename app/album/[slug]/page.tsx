@@ -7,6 +7,11 @@ interface PageProps {
   params: { slug: string };
 }
 
+interface Track {
+  title: string;
+  url?: string;
+}
+
 async function getAlbumData(slug: string) {
   try {
     // Try fetching by slug
