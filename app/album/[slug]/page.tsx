@@ -30,7 +30,7 @@ async function getAlbumData(slug: string) {
           slug: data.slug,
           imageBase64: data.imageBase64,
           description: data.description,
-          tracks: data.tracks,
+          tracks: Array.isArray(data.tracks) ? data.tracks : [],
           createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt
         },
         needsRedirect: null
