@@ -1,7 +1,7 @@
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { Metadata } from "next";
-
+import Image from "next/image";
 
 interface PageProps {
   params: { slug: string };
