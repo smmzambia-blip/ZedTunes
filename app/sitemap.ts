@@ -1,7 +1,6 @@
 import { MetadataRoute } from 'next'
 import { db } from '@/lib/firebase'
 import { collection, getDocs } from 'firebase/firestore'
-import { generateSlug } from '@/lib/slug'
 
 export const dynamic = 'force-dynamic'
 
