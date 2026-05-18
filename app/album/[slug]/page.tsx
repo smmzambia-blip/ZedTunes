@@ -1,8 +1,7 @@
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { Metadata } from "next";
-import { generateSlug } from "@/lib/slug";
-import { permanentRedirect } from "next/navigation";
+
 
 interface PageProps {
   params: { slug: string };
