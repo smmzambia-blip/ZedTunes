@@ -70,5 +70,5 @@ export default async function ArtistPage({ params }: PageProps) {
     );
   }
 
-  return <ArtistClient artist={artist} initialSongs={songs} />;
+  return <ArtistClient artist={artist} songs={songs} />;
 }
