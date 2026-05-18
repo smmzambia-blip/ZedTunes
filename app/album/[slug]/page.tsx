@@ -113,7 +113,7 @@ export default async function AlbumPage({ params }: PageProps) {
             </h2>
           </div>
           <div className="divide-y divide-gray-50">
-            {album.tracks.map((track, index) => (
+            {album.tracks.map((track: Track, index: number) => (
               <div key={index} className="px-8 py-5">
                 <div className="flex items-center gap-4">
                   <span className="text-gray-300 font-bold w-4 text-sm">{(index + 1).toString().padStart(2, '0')}</span>
