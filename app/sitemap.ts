@@ -11,7 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     
     const songUrls: MetadataRoute.Sitemap = snapshot.docs.map((doc) => {
       const data = doc.data()
-      const slug = data.slug || generateSlug(data.title)
+      const slug = data.slug
       const prefix = data.category === 'Album' ? 'album' : 'song'
       
       return {
