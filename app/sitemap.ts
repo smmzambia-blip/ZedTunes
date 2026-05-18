@@ -16,7 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       
       return {
         url: `https://zedtunez.vercel.app/${prefix}/${slug}`,
-        lastModified: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(),
+        lastModified: data.updatedAt?.toDate?.() ?? new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
       }
