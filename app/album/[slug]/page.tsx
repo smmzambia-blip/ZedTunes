@@ -92,7 +92,8 @@ export default async function AlbumPage({ params }: PageProps) {
           </div>
 
           {album.description && (
-            <p className="text-gray-600 text-lg italic">"{album.description}"</p>
+            <p className="text-gray-600 text-lg italic">
+             &ldquo;{album.description}&rdquo;</p>
           )}
         </div>
       </div>
