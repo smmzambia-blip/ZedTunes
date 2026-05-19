@@ -1,7 +1,7 @@
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import Image from 'next/image';
-import { Users } from 'lucide-react';
+import { Users, BadgeCheck } from 'lucide-react';
 import Link from 'next/link';
 import { generateSlug } from '@/lib/slug';
 import { unstable_cache } from 'next/cache';
@@ -75,7 +75,10 @@ export default async function ArtistsPage() {
                     </div>
                   )}
                 </div>
-                <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors text-center">{artist.name}</h3>
+                <div className="flex items-center gap-1">
+                  <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors text-center">{artist.name}</h3>
+                  <BadgeCheck size={16} className="text-blue-500 fill-blue-500" strokeWidth={0} />
+                </div>
                 <p className="text-xs text-gray-500 line-clamp-1 text-center">{artist.bio || 'Artist'}</p>
               </Link>
             </div>

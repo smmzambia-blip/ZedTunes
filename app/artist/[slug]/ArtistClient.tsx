@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { Users, Music } from "lucide-react";
+import { Users, Music, BadgeCheck } from "lucide-react";
 import { SongCard } from "@/components/ui/song-card";
 
 export interface Artist {
@@ -53,7 +53,10 @@ export default function ArtistClient({ artist, songs }: { artist: Artist, songs:
           <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
              <span className="bg-purple-600 text-white text-[10px] font-black px-3 py-1 rounded-full tracking-widest uppercase">Verified Artist</span>
           </div>
-          <h1 className="text-5xl md:text-7xl font-black text-gray-900 mb-4 tracking-tighter">{artist.name}</h1>
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-4">
+            <h1 className="text-5xl md:text-7xl font-black text-gray-900 tracking-tighter">{artist.name}</h1>
+            <BadgeCheck size={40} className="text-blue-500 fill-blue-500" strokeWidth={0} />
+          </div>
           <p className="text-gray-600 max-w-2xl text-lg leading-relaxed">{artist.bio || 'This artist has not shared a bio yet.'}</p>
         </div>
       </div>
