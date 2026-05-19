@@ -49,7 +49,8 @@ export default function SongClient({ song }: { song: Song }) {
     return d.toLocaleDateString('en-US', { 
       day: 'numeric', 
       month: 'short', 
-      year: 'numeric' 
+      year: 'numeric',
+      timeZone: 'UTC'
     });
   };
 

@@ -44,7 +44,8 @@ export function SongCard({ id, title, artist, slug, imageBase64, category, creat
     return d.toLocaleDateString('en-US', { 
       day: 'numeric', 
       month: 'short', 
-      year: 'numeric' 
+      year: 'numeric',
+      timeZone: 'UTC'
     });
   };
 

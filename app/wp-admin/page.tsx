@@ -96,7 +96,7 @@ export default function AdminDashboard() {
 
   const [siteSettings, setSiteSettings] = useState({
     siteName: 'ZedTunes',
-    siteBio: "Zambia's hottest music platform",
+    siteBio: "Download Zed Latest Music",
     logoBase64: ''
   });
 
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
         const data = docSnap.data();
         setSiteSettings({
           siteName: data.siteName || 'ZedTunes',
-          siteBio: data.siteBio || "Zambia's hottest music platform",
+          siteBio: data.siteBio || "Download Zed Latest Music",
           logoBase64: data.logoBase64 || ''
         });
       }
@@ -279,7 +279,7 @@ export default function AdminDashboard() {
           ...dataToSave,
           updatedAt: serverTimestamp()
         });
-        await revalidateSpecificData(dataToSave.category === 'Album' ? 'album' : 'song', dataToSave.slug);
+        await revalidateSpecificData();
         alert("Post updated successfully!");
       } else {
         console.log("Adding new document to 'songs'");
@@ -287,7 +287,7 @@ export default function AdminDashboard() {
           ...dataToSave,
           createdAt: serverTimestamp()
         });
-        await revalidateSpecificData(dataToSave.category === 'Album' ? 'album' : 'song', dataToSave.slug);
+        await revalidateSpecificData();
         alert("Post published successfully!");
       }
       setShowUploadModal(false);
@@ -319,7 +319,7 @@ export default function AdminDashboard() {
           ...artistData,
           slug
         });
-        await revalidateSpecificData('artist', slug);
+        await revalidateSpecificData();
         alert("Artist updated successfully!");
       } else {
         await addDoc(collection(db, 'artists'), {
@@ -327,7 +327,7 @@ export default function AdminDashboard() {
           slug,
           createdAt: serverTimestamp()
         });
-        await revalidateSpecificData('artist', slug);
+        await revalidateSpecificData();
         alert("Artist added successfully!");
       }
       setShowArtistModal(false);
@@ -369,7 +369,7 @@ export default function AdminDashboard() {
     if (confirm("Are you sure you want to delete this track?")) {
       try {
         await deleteDoc(doc(db, 'songs', id));
-        await revalidateSpecificData('song');
+        await revalidateSpecificData();
         fetchSongs();
       } catch (e) {
         handleFirestoreError(e, OperationType.DELETE, `songs/${id}`);
@@ -381,7 +381,7 @@ export default function AdminDashboard() {
     if (confirm("Are you sure you want to delete this artist?")) {
       try {
         await deleteDoc(doc(db, 'artists', id));
-        await revalidateSpecificData('artist');
+        await revalidateSpecificData();
         fetchArtists();
       } catch (e) {
         handleFirestoreError(e, OperationType.DELETE, `artists/${id}`);

@@ -16,13 +16,20 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 });
 
-export const metadata: Metadata = {
-  title: "ZedTunes",
-  description: "Zambia's hottest music platform",
-  verification: {
-    google: "_04GK_zgHd1ozBiScxbR6ddB9hzSbdFIGb70TwMGTWo",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  return {
+    title: settings?.siteName || "ZedTunes",
+    description: settings?.siteBio || "Download Zed Latest Music",
+    verification: {
+      google: "_04GK_zgHd1ozBiScxbR6ddB9hzSbdFIGb70TwMGTWo",
+    },
+    icons: settings?.logoBase64 ? {
+      icon: settings.logoBase64,
+      apple: settings.logoBase64,
+    } : undefined
+  };
+}
 
 const getSiteSettings = unstable_cache(
   async () => {

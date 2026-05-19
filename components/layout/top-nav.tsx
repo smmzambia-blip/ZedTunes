@@ -7,11 +7,11 @@ import { auth, db } from '@/lib/firebase';
 import { signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
-export function TopNav({ initialSettings }: { initialSettings?: { siteName?: string; logoBase64?: string } | null }) {
+export function TopNav({ initialSettings }: { initialSettings?: { siteName?: string; logoBase64?: string; siteBio?: string } | null }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [siteSettings, setSiteSettings] = useState<{ logoBase64?: string; siteName?: string } | null>(initialSettings || null);
+  const [siteSettings, setSiteSettings] = useState<{ logoBase64?: string; siteName?: string; siteBio?: string } | null>(initialSettings || null);
 
   useEffect(() => {
     // If we have settings, update document title
@@ -89,7 +89,7 @@ export function TopNav({ initialSettings }: { initialSettings?: { siteName?: str
 
       <div className="px-4 pb-2 flex justify-center hidden sm:block">
          <p className="text-[10px] sm:text-xs font-bold text-gray-400 italic tracking-widest uppercase text-center">
-            Zambia&apos;s Premier Music Excellence
+            {siteSettings?.siteBio || "Download Zed Latest Music"}
           </p>
       </div>
       
