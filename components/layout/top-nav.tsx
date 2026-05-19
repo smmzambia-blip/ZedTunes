@@ -62,20 +62,24 @@ export function TopNav({ initialSettings }: { initialSettings?: { siteName?: str
   ];
 
   return (
-    <header className="flex flex-col bg-white shadow-sm z-50 border-b border-gray-100 sticky top-0">
-      <div className="py-4 sm:py-8 flex items-center justify-between px-4 sm:px-8 relative bg-white">
-        <button 
-          onClick={() => setIsMenuOpen(!isMenuOpen)} 
-          className="sm:hidden p-2 text-gray-500"
-        >
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+    <header className="flex flex-col bg-white shadow-sm z-50 border-b border-gray-100">
+      <div className="py-4 sm:py-8 grid grid-cols-3 items-center px-4 sm:px-8 relative bg-white">
+        <div className="flex justify-start">
+          <button 
+            onClick={() => setIsMenuOpen(!isMenuOpen)} 
+            className="sm:hidden p-2 -ml-2 text-gray-500"
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
 
-        <Link href="/" className="text-xl sm:text-3xl font-black tracking-tighter text-[#39FF14] bg-black px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg shadow-xl hover:scale-105 transition-transform">
-          {siteSettings?.siteName?.toUpperCase().replace('TUNES', '') || 'ZED'}<span className="text-white">{siteSettings?.siteName?.toUpperCase().includes('TUNES') ? 'TUNES' : (siteSettings?.siteName ? '' : 'TUNES')}</span>
-        </Link>
+        <div className="flex justify-center">
+          <Link href="/" className="text-xl sm:text-3xl font-black tracking-tighter text-[#39FF14] bg-black px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg shadow-xl hover:scale-105 transition-transform">
+            {siteSettings?.siteName?.toUpperCase().replace('TUNES', '') || 'ZED'}<span className="text-white">{siteSettings?.siteName?.toUpperCase().includes('TUNES') ? 'TUNES' : (siteSettings?.siteName ? '' : 'TUNES')}</span>
+          </Link>
+        </div>
         
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center justify-end gap-2 sm:gap-4">
           {isAdmin && (
             <div className="hidden sm:flex items-center gap-3">
               <Link href="/wp-admin" className="text-[10px] font-black text-white bg-blue-600 px-3 py-1.5 rounded-full hover:bg-blue-700 transition uppercase tracking-tighter">WP-Admin</Link>

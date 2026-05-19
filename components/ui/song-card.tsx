@@ -1,14 +1,11 @@
-"use client";
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 
-import { Download, Edit, Music, Calendar } from 'lucide-react';
-import { auth } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { Music, Calendar } from 'lucide-react';
 import Image from 'next/image';
-import { downloadFile } from '@/lib/download';
 import { generateSlug } from '@/lib/slug';
+import { AdminEditButton } from '@/components/ui/admin-edit-button';
+import { ClientDownloadButton } from '@/components/ui/client-download-button';
 
 import { Timestamp } from 'firebase/firestore';
 
@@ -25,8 +22,6 @@ interface SongCardProps {
 }
 
 export function SongCard({ id, title, artist, slug, imageBase64, category, createdAt, archiveLink }: SongCardProps) {
-  const [isAdmin, setIsAdmin] = useState(false);
-
   const finalSlug = slug || generateSlug(title);
   const prefix = category === 'Album' ? 'album' : 'song';
   const href = `/${prefix}/${finalSlug}`;
@@ -49,21 +44,11 @@ export function SongCard({ id, title, artist, slug, imageBase64, category, creat
     });
   };
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAdmin(user?.email === "hilzmg70@gmail.com");
-    });
-    return () => unsubscribe();
-  }, []);
-
   return (
     <Link href={href} className="flex flex-col gap-2 group cursor-pointer min-w-0 relative">
       <div className="aspect-square bg-gray-100 rounded-2xl border border-gray-100 overflow-hidden relative">
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-20">
-          <div className="w-8 h-8 bg-[#39FF14] rounded-full flex items-center justify-center text-black font-black text-[8px] pl-[1px] transition hover:scale-105 shadow-xl"
-            onClick={(e) => {
-              e.preventDefault();
-            }}>
+          <div className="w-8 h-8 bg-[#39FF14] rounded-full flex items-center justify-center text-black font-black text-[8px] pl-[1px] transition hover:scale-105 shadow-xl">
             ▶
           </div>
         </div>
@@ -74,36 +59,10 @@ export function SongCard({ id, title, artist, slug, imageBase64, category, creat
           </div>
         )}
 
-        {isAdmin && (
-          <div className="absolute bottom-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-30">
-            <button 
-              className="w-6 h-6 bg-blue-600 text-white flex items-center justify-center rounded-md hover:bg-blue-700 transition"
-              title="Edit Post"
-              onClick={(e) => {
-                e.preventDefault();
-                window.location.href = `/wp-admin?editSongId=${id}`;
-              }}
-            >
-              <Edit size={10} />
-            </button>
-          </div>
-        )}
+        <AdminEditButton id={id} />
 
         <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-30">
-          <button 
-            className="w-6 h-6 bg-white/20 backdrop-blur text-white flex items-center justify-center rounded-full hover:bg-white/40 hover:scale-105 transition-all"
-            title="Download"
-            onClick={(e) => {
-              e.preventDefault();
-              if (archiveLink) {
-                downloadFile(archiveLink, `${title} - ${artist}.mp3`);
-              } else {
-                window.location.href = href;
-              }
-            }}
-          >
-            <Download size={10} />
-          </button>
+          <ClientDownloadButton archiveLink={archiveLink} title={title} artist={artist} href={href} />
         </div>
         
         {imageBase64 ? (
