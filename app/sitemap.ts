@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next';
+import { QuerySnapshot, DocumentData } from 'firebase/firestore';
 
 export const revalidate = 3600; // 1 hour
 
@@ -60,27 +61,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     // Add timeout to prevent hanging requests
-    const timeoutPromise = new Promise((_, reject) =>
+    const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('Firebase fetch timeout')), 5000)
     );
 
-    const fetchDynamicRoutes = async () => {
+    const fetchDynamicRoutes = async (): Promise<MetadataRoute.Sitemap> => {
       const { db } = await import('@/lib/firebase');
       const { collection, getDocs } = await import('firebase/firestore');
       const { generateSlug } = await import('@/lib/slug');
 
       // Fetch songs with timeout
-      const songsSnapshot = await Promise.race([
+      const songsSnapshot = (await Promise.race([
         getDocs(collection(db, 'songs')),
-        timeoutPromise
-      ]);
+        timeoutPromise,
+      ])) as QuerySnapshot<DocumentData>;
 
-      const songRoutes: MetadataRoute.Sitemap = (songsSnapshot as any).docs
-        .filter((doc: any) => {
+      const songRoutes: MetadataRoute.Sitemap = songsSnapshot.docs
+        .filter((doc) => {
           const data = doc.data();
           return data.slug || data.title;
         })
-        .map((doc: any) => {
+        .map((doc) => {
           const data = doc.data();
           const slug = data.slug || generateSlug(data.title || '');
           const prefix = data.category === 'Album' ? 'album' : 'song';
@@ -94,17 +95,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         });
 
       // Fetch artists with timeout
-      const artistsSnapshot = await Promise.race([
+      const artistsSnapshot = (await Promise.race([
         getDocs(collection(db, 'artists')),
-        timeoutPromise
-      ]);
+        timeoutPromise,
+      ])) as QuerySnapshot<DocumentData>;
 
-      const artistRoutes: MetadataRoute.Sitemap = (artistsSnapshot as any).docs
-        .filter((doc: any) => {
+      const artistRoutes: MetadataRoute.Sitemap = artistsSnapshot.docs
+        .filter((doc) => {
           const data = doc.data();
           return data.slug || data.name;
         })
-        .map((doc: any) => {
+        .map((doc) => {
           const data = doc.data();
           const slug = data.slug || generateSlug(data.name || '');
 
