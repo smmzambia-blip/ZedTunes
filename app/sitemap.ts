@@ -1,16 +1,13 @@
 import { MetadataRoute } from 'next';
-import { db } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
-import { generateSlug } from '@/lib/slug';
 
-export const revalidate = 86400; // 24 hours
+export const revalidate = 3600; // 1 hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://zedtunez.vercel.app';
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: `${baseUrl}`,
+      url: baseUrl,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 1.0,
@@ -62,19 +59,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let dynamicRoutes: MetadataRoute.Sitemap = [];
 
   try {
-    // Fetch songs
-    const songsSnapshot = await getDocs(collection(db, 'songs'));
-    if (songsSnapshot.size > 0) {
-      const songRoutes: MetadataRoute.Sitemap = songsSnapshot.docs
-        .filter(doc => {
+    // Add timeout to prevent hanging requests
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Firebase fetch timeout')), 5000)
+    );
+
+    const fetchDynamicRoutes = async () => {
+      const { db } = await import('@/lib/firebase');
+      const { collection, getDocs } = await import('firebase/firestore');
+      const { generateSlug } = await import('@/lib/slug');
+
+      // Fetch songs with timeout
+      const songsSnapshot = await Promise.race([
+        getDocs(collection(db, 'songs')),
+        timeoutPromise
+      ]);
+
+      const songRoutes: MetadataRoute.Sitemap = (songsSnapshot as any).docs
+        .filter((doc: any) => {
           const data = doc.data();
-          return data.slug || data.title; // Only include if has slug or title
+          return data.slug || data.title;
         })
-        .map(doc => {
+        .map((doc: any) => {
           const data = doc.data();
           const slug = data.slug || generateSlug(data.title || '');
           const prefix = data.category === 'Album' ? 'album' : 'song';
-          
+
           return {
             url: `${baseUrl}/${prefix}/${slug}`,
             lastModified: new Date(),
@@ -82,21 +92,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.6,
           };
         });
-      dynamicRoutes = [...dynamicRoutes, ...songRoutes];
-    }
 
-    // Fetch artists
-    const artistsSnapshot = await getDocs(collection(db, 'artists'));
-    if (artistsSnapshot.size > 0) {
-      const artistRoutes: MetadataRoute.Sitemap = artistsSnapshot.docs
-        .filter(doc => {
+      // Fetch artists with timeout
+      const artistsSnapshot = await Promise.race([
+        getDocs(collection(db, 'artists')),
+        timeoutPromise
+      ]);
+
+      const artistRoutes: MetadataRoute.Sitemap = (artistsSnapshot as any).docs
+        .filter((doc: any) => {
           const data = doc.data();
-          return data.slug || data.name; // Only include if has slug or name
+          return data.slug || data.name;
         })
-        .map(doc => {
+        .map((doc: any) => {
           const data = doc.data();
           const slug = data.slug || generateSlug(data.name || '');
-          
+
           return {
             url: `${baseUrl}/artist/${slug}`,
             lastModified: new Date(),
@@ -104,11 +115,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 0.5,
           };
         });
-      dynamicRoutes = [...dynamicRoutes, ...artistRoutes];
-    }
+
+      return [...songRoutes, ...artistRoutes];
+    };
+
+    dynamicRoutes = await fetchDynamicRoutes();
   } catch (error) {
     console.error('Error fetching dynamic data for sitemap:', error);
-    // Continue with static routes even if dynamic fetch fails
+    // Continue with static routes only - don't let Firebase errors break the sitemap
+    console.log('Serving sitemap with static routes only');
   }
 
   return [...staticRoutes, ...dynamicRoutes];
