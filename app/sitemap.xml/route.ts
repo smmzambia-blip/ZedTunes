@@ -21,7 +21,7 @@ export async function GET() {
     { url: `${baseUrl}/terms`, changefreq: 'yearly', priority: '0.3' },
   ];
 
-  let dynamicUrls: { url: string; changefreq: string; priority: string }[] = [];
+  const dynamicUrlsArray: { url: string; changefreq: string; priority: string }[] = [];
 
   try {
     // Add timeout to prevent hanging
@@ -45,7 +45,7 @@ export async function GET() {
         if (data.slug || data.title) {
           const slug = data.slug || generateSlug(data.title || '');
           const prefix = data.category === 'Album' ? 'album' : 'song';
-          dynamicUrls.push({
+          dynamicUrlsArray.push({
             url: `${baseUrl}/${prefix}/${slug}`,
             changefreq: 'weekly',
             priority: '0.6',
@@ -67,7 +67,7 @@ export async function GET() {
         const data = doc.data();
         if (data.slug || data.name) {
           const slug = data.slug || generateSlug(data.name || '');
-          dynamicUrls.push({
+          dynamicUrlsArray.push({
             url: `${baseUrl}/artist/${slug}`,
             changefreq: 'weekly',
             priority: '0.5',
@@ -81,7 +81,7 @@ export async function GET() {
     console.error('Error in sitemap generation:', error);
   }
 
-  const allUrls = [...staticRoutes, ...dynamicUrls];
+  const allUrls = [...staticRoutes, ...dynamicUrlsArray];
   const now = new Date().toISOString();
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
