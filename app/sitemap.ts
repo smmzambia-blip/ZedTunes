@@ -64,36 +64,51 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     // Fetch songs
     const songsSnapshot = await getDocs(collection(db, 'songs'));
-    const songRoutes: MetadataRoute.Sitemap = songsSnapshot.docs.map(doc => {
-      const data = doc.data();
-      const slug = data.slug || generateSlug(data.title || '');
-      const prefix = data.category === 'Album' ? 'album' : 'song';
-      
-      return {
-        url: `${baseUrl}/${prefix}/${slug}`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly' as const,
-        priority: 0.6,
-      };
-    });
-    dynamicRoutes = [...dynamicRoutes, ...songRoutes];
+    if (songsSnapshot.size > 0) {
+      const songRoutes: MetadataRoute.Sitemap = songsSnapshot.docs
+        .filter(doc => {
+          const data = doc.data();
+          return data.slug || data.title; // Only include if has slug or title
+        })
+        .map(doc => {
+          const data = doc.data();
+          const slug = data.slug || generateSlug(data.title || '');
+          const prefix = data.category === 'Album' ? 'album' : 'song';
+          
+          return {
+            url: `${baseUrl}/${prefix}/${slug}`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly' as const,
+            priority: 0.6,
+          };
+        });
+      dynamicRoutes = [...dynamicRoutes, ...songRoutes];
+    }
 
     // Fetch artists
     const artistsSnapshot = await getDocs(collection(db, 'artists'));
-    const artistRoutes: MetadataRoute.Sitemap = artistsSnapshot.docs.map(doc => {
-      const data = doc.data();
-      const slug = data.slug || generateSlug(data.name || '');
-      
-      return {
-        url: `${baseUrl}/artist/${slug}`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly' as const,
-        priority: 0.5,
-      };
-    });
-    dynamicRoutes = [...dynamicRoutes, ...artistRoutes];
+    if (artistsSnapshot.size > 0) {
+      const artistRoutes: MetadataRoute.Sitemap = artistsSnapshot.docs
+        .filter(doc => {
+          const data = doc.data();
+          return data.slug || data.name; // Only include if has slug or name
+        })
+        .map(doc => {
+          const data = doc.data();
+          const slug = data.slug || generateSlug(data.name || '');
+          
+          return {
+            url: `${baseUrl}/artist/${slug}`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly' as const,
+            priority: 0.5,
+          };
+        });
+      dynamicRoutes = [...dynamicRoutes, ...artistRoutes];
+    }
   } catch (error) {
-    console.error('Error fetching data for sitemap:', error);
+    console.error('Error fetching dynamic data for sitemap:', error);
+    // Continue with static routes even if dynamic fetch fails
   }
 
   return [...staticRoutes, ...dynamicRoutes];
