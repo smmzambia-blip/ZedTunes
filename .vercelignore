@@ -1,0 +1,11 @@
+.git
+.gitignore
+.eslintignore
+*.log
+*.lock
+.env.local
+.env.*.local
+.next/cache
+node_modules
+public/*.map
+README.md
