@@ -7,7 +7,7 @@ export const revalidate = 3600; // 1 hour
  * Sitemap route handler for /sitemap.xml
  * This route handler intercepts requests to /sitemap.xml
  */
-export async function GET(request: Request) {
+export async function GET() {
   const baseUrl = 'https://zedtunez.vercel.app';
 
   const staticRoutes = [
