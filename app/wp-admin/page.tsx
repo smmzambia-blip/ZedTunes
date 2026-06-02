@@ -97,7 +97,8 @@ export default function AdminDashboard() {
   const [siteSettings, setSiteSettings] = useState({
     siteName: 'ZedTunes',
     siteBio: "Download Zed Latest Music",
-    logoBase64: ''
+    logoBase64: '',
+    underConstruction: false
   });
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -164,7 +165,8 @@ export default function AdminDashboard() {
         setSiteSettings({
           siteName: data.siteName || 'ZedTunes',
           siteBio: data.siteBio || "Download Zed Latest Music",
-          logoBase64: data.logoBase64 || ''
+          logoBase64: data.logoBase64 || '',
+          underConstruction: data.underConstruction || false
         });
       }
     } catch (e) {
@@ -461,6 +463,40 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {siteSettings.underConstruction && (
+        <div id="maintenance-alert-banner" className="bg-orange-50 border border-orange-200 text-orange-950 px-6 py-4 rounded-2xl mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-pulse">
+          <div className="flex gap-3">
+            <span className="p-2.5 bg-orange-100 rounded-xl text-orange-700">
+              <Zap size={20} className="fill-orange-600" />
+            </span>
+            <div>
+              <h2 className="font-bold text-sm text-orange-900">Under Construction Mode is Active</h2>
+              <p className="text-xs text-orange-850 mt-0.5">Standard visitors are currently seeing the polished construction page. You can continue to browse or test the live site perfectly.</p>
+            </div>
+          </div>
+          <button 
+            type="button"
+            onClick={async () => {
+              try {
+                const updated = { ...siteSettings, underConstruction: false };
+                setSiteSettings(updated);
+                await setDoc(doc(db, 'settings', 'site'), {
+                  ...updated,
+                  updatedAt: serverTimestamp()
+                });
+                await revalidateSettings();
+                alert("Site is now LIVE and fully accessible to public visitors!");
+              } catch (e) {
+                handleFirestoreError(e, OperationType.WRITE, 'settings/site');
+              }
+            }}
+            className="bg-white hover:bg-orange-100/55 text-orange-900 px-4 py-2 border border-orange-200 rounded-xl text-xs font-bold transition whitespace-nowrap active:scale-95"
+          >
+            Turn Off Maintenance
+          </button>
+        </div>
+      )}
+
       {errorMsg && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl mb-8 flex flex-col gap-2">
           <h2 className="font-bold">Database Quota Error</h2>
@@ -648,6 +684,32 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <p className="text-[10px] text-gray-500 mt-1">This will be used as the site logo and favicon. Square icons work best.</p>
+              </div>
+
+              {/* Under Construction Toggle */}
+              <div id="construction-toggle-section" className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-center justify-between gap-4 mt-2">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-bold text-orange-950 flex items-center gap-1.5">
+                    <Zap size={14} className="text-orange-600 fill-orange-600" /> Under Construction Mode
+                  </label>
+                  <p className="text-[10px] text-orange-800 leading-relaxed">
+                    When active, public visitors will see a polished placeholder page. Administrators can still view/browse the site.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSiteSettings(prev => ({ ...prev, underConstruction: !prev.underConstruction }))}
+                  className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300 shrink-0 ${
+                    siteSettings.underConstruction ? 'bg-orange-600' : 'bg-gray-300'
+                  }`}
+                  aria-label="Toggle Under Construction"
+                >
+                  <div
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${
+                      siteSettings.underConstruction ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
 
               <div className="flex justify-end gap-3 mt-4">

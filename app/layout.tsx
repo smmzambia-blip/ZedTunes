@@ -8,6 +8,7 @@ import { doc, getDoc } from "firebase/firestore";
 
 import { getCached, setCached } from "@/lib/cache";
 import { FALLBACK_SETTINGS } from "@/lib/fallbackData";
+import { UnderConstructionGuard } from "@/components/layout/under-construction-guard";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -66,7 +67,9 @@ export default async function RootLayout({
           <section className="flex-1 overflow-y-auto flex flex-col">
             <TopNav initialSettings={{ siteName: settings?.siteName, siteBio: settings?.siteBio }} />
             <div className="p-4 sm:p-8 flex flex-col gap-10 flex-1">
-              {children}
+              <UnderConstructionGuard>
+                {children}
+              </UnderConstructionGuard>
             </div>
             <Footer />
           </section>

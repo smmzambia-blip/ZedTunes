@@ -55,7 +55,9 @@ service cloud.firestore {
     function isValidSettings(data) {
       return data.siteName is string && data.siteName.size() <= 100 &&
              data.siteBio is string && data.siteBio.size() <= 500 &&
-             (!('updatedAt' in data) || (data.updatedAt == request.time));
+             (!('logoBase64' in data) || (data.logoBase64 is string)) &&
+             (!('underConstruction' in data) || (data.underConstruction is bool)) &&
+             (!('updatedAt' in data) || (data.updatedAt == request.time || data.updatedAt == null));
     }
 
     // --- Collections ---
