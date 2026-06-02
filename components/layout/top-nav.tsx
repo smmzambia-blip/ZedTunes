@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Search, LogOut, Menu, X } from 'lucide-react';
+import { Search, LogOut, Menu, X, Music } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
@@ -74,8 +74,63 @@ export function TopNav({ initialSettings }: { initialSettings?: { siteName?: str
         </div>
 
         <div className="flex justify-center">
-          <Link href="/" className="text-xl sm:text-3xl font-black tracking-tighter text-[#39FF14] bg-black px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg shadow-xl hover:scale-105 transition-transform">
-            {siteSettings?.siteName?.toUpperCase().replace('TUNES', '') || 'ZED'}<span className="text-white">{siteSettings?.siteName?.toUpperCase().includes('TUNES') ? 'TUNES' : (siteSettings?.siteName ? '' : 'TUNES')}</span>
+          <Link href="/" className="flex items-center gap-2.5 group transition-transform duration-300">
+            {/* Logo Icon Container */}
+            <div className="relative flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-black border border-zinc-800 overflow-hidden shadow-lg group-hover:scale-105 transition-transform duration-300">
+              {siteSettings?.logoBase64 ? (
+                <img 
+                  src={siteSettings.logoBase64} 
+                  alt={siteSettings?.siteName || "Logo"} 
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <div className="relative flex items-center justify-center w-full h-full bg-gradient-to-br from-black via-zinc-900 to-black text-[#39FF14]">
+                  {/* Subtle pulsing/glowing background gradient */}
+                  <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#39FF14_10%,_transparent_60%)] opacity-20 group-hover:opacity-40 transition-opacity duration-300 pointer-events-none" />
+                  <Music size={18} className="sm:w-5 sm:h-5 relative z-10 text-[#39FF14]" strokeWidth={2.5} />
+                </div>
+              )}
+            </div>
+
+            {/* Logo Text Info */}
+            <div id="brand-identity" className="flex flex-col justify-center select-none text-left">
+              <div className="flex items-center gap-1 leading-none sm:mb-0.5">
+                {(() => {
+                  const rawName = siteSettings?.siteName || "ZedTunes";
+                  const regex = /tunes/i;
+                  const match = rawName.match(regex);
+                  
+                  if (match && match.index !== undefined) {
+                    const firstPart = rawName.substring(0, match.index);
+                    const secondPart = rawName.substring(match.index);
+                    return (
+                      <>
+                        <span className="text-base sm:text-2xl font-black tracking-tight text-black group-hover:text-gray-800 transition-colors uppercase">
+                          {firstPart}
+                        </span>
+                        <span className="text-base sm:text-2xl font-light tracking-wide text-gray-500 uppercase">
+                          {secondPart}
+                        </span>
+                      </>
+                    );
+                  }
+                  
+                  return (
+                    <span className="text-base sm:text-2xl font-black tracking-tight text-black group-hover:text-gray-800 transition-colors uppercase">
+                      {rawName}
+                    </span>
+                  );
+                })()}
+
+                {/* Pulsing Active indicator */}
+                <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-[#39FF14] shadow-[0_0_8px_#39FF14] animate-pulse flex-shrink-0" />
+              </div>
+              
+              {/* Zambian Music Hub Subtitle Label */}
+              <span className="text-[7px] sm:text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] -mt-0.5 block">
+                ZAMBIAN MUSIC HUB
+              </span>
+            </div>
           </Link>
         </div>
         
