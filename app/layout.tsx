@@ -5,7 +5,9 @@ import { TopNav } from "@/components/layout/top-nav";
 import { Footer } from "@/components/layout/footer";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { unstable_cache } from "next/cache";
+
+import { getCached, setCached } from "@/lib/cache";
+import { FALLBACK_SETTINGS } from "@/lib/fallbackData";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,22 +33,24 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const getSiteSettings = unstable_cache(
-  async () => {
-    try {
-      const docRef = doc(db, 'settings', 'site');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        return docSnap.data();
-      }
-    } catch (e) {
-      console.error("Failed to fetch settings on server", e);
+async function getSiteSettings() {
+  const cacheKey = 'site-settings';
+  const cached = getCached<Record<string, string>>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const docRef = doc(db, 'settings', 'site');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      setCached(cacheKey, data);
+      return data;
     }
-    return null;
-  },
-  ['site-settings'],
-  { revalidate: 3600 } // Cache for 1 hour
-);
+  } catch (e) {
+    console.warn("Could not load settings from Firestore: " + (e instanceof Error ? e.message : String(e)));
+  }
+  return FALLBACK_SETTINGS;
+}
 
 export default async function RootLayout({
   children,

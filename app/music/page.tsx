@@ -1,8 +1,10 @@
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { SongCard } from '@/components/ui/song-card';
 import { Music } from 'lucide-react';
 import Link from 'next/link';
+import { getCached, setCached } from '@/lib/cache';
+import { FALLBACK_SONGS } from '@/lib/fallbackData';
 
 interface Song {
   id: string;
@@ -15,37 +17,57 @@ interface Song {
   archiveLink?: string;
 }
 
-import { unstable_cache } from 'next/cache';
-
 export const revalidate = 3600;
 
-const getSongs = unstable_cache(
-  async (category: string) => {
-    try {
-      let q;
+async function getSongs(category: string) {
+  const cacheKey = `music-category-${category}`;
+  const cached = getCached<Song[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'));
+    
+    const snapshot = await getDocs(q);
+    const allSongs = snapshot.docs.map(doc => {
+      const docData = doc.data();
+      return {
+        id: doc.id,
+        ...docData,
+        createdAt: docData.createdAt?.toDate ? docData.createdAt.toDate().toISOString() : (docData.createdAt || null)
+      } as unknown as Song;
+    });
+
+    const data = allSongs.filter(s => {
       if (category === 'All') {
-        q = query(collection(db, 'songs'), where('category', '!=', 'Album'), orderBy('category'), orderBy('createdAt', 'desc'));
-      } else {
-        q = query(collection(db, 'songs'), where('category', '==', category), orderBy('createdAt', 'desc'));
+        return s.category !== 'Album';
       }
-      
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null)
-        } as unknown as Song;
+      return s.category === category;
+    });
+
+    if (data.length === 0) {
+      const fallbackResult = FALLBACK_SONGS.filter(s => {
+        if (category === 'All') {
+          return s.category !== 'Album';
+        }
+        return s.category === category;
       });
-    } catch (e) {
-      console.error("Firestore fetching error:", e);
-      return [];
+      return fallbackResult;
     }
-  },
-  ['music-library'],
-  { revalidate: 3600 }
-);
+
+    setCached(cacheKey, data);
+    return data;
+  } catch (e) {
+    console.warn("Could not fetch music categories from Firestore: " + (e instanceof Error ? e.message : String(e)));
+    // Graceful fallback and filter by category
+    const fallbackResult = FALLBACK_SONGS.filter(s => {
+      if (category === 'All') {
+        return s.category !== 'Album';
+      }
+      return s.category === category;
+    });
+    return fallbackResult;
+  }
+}
 
 export default async function MusicPage({ searchParams }: { searchParams: { category?: string } }) {
   const activeCategory = searchParams.category || 'All';

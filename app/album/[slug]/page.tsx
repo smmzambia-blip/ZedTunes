@@ -4,65 +4,83 @@ import { Metadata } from "next";
 import { generateSlug } from "@/lib/slug";
 import { permanentRedirect } from "next/navigation";
 import SongClient, { Song as SongType } from "../../song/[slug]/SongClient";
+import { getCached, setCached } from "@/lib/cache";
+import { FALLBACK_SONGS } from "@/lib/fallbackData";
 
 interface PageProps {
   params: { slug: string };
 }
 
-import { unstable_cache } from 'next/cache';
-
 export const revalidate = 3600;
 
-const getAlbumData = unstable_cache(
-  async (slug: string) => {
-    try {
-      // 1. Try fetching by slug
-      const q = query(collection(db, "songs"), where("slug", "==", slug), where("category", "==", "Album"));
-      const slugSnap = await getDocs(q);
+async function getAlbumData(slug: string) {
+  const cacheKey = `album-${slug}`;
+  const cached = getCached<{ disc: SongType | null; needsRedirect: string | null }>(cacheKey);
+  if (cached) return cached;
 
-      if (!slugSnap.empty) {
-        const docData = slugSnap.docs[0];
-        const data = docData.data();
-        const albumData: SongType = {
-          id: docData.id,
-          title: data.title || "",
-          artist: data.artist || "",
-          category: data.category || "Album",
-          slug: data.slug,
-          views: data.views,
-          imageBase64: data.imageBase64,
-          description: data.description,
-          archiveLink: data.archiveLink,
-          tracks: data.tracks,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null)
-        };
-        return { disc: albumData, needsRedirect: null };
-      }
+  try {
+    // 1. Try fetching by slug
+    const q = query(collection(db, "songs"), where("slug", "==", slug), where("category", "==", "Album"));
+    const slugSnap = await getDocs(q);
 
-      // 2. Fallback to ID
-      const docRef = doc(db, "songs", slug);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const actualSlug = data.slug || generateSlug(data.title);
-        // Pure-ish function
-
-        if (data.category !== "Album") {
-            return { disc: null, needsRedirect: `/song/${actualSlug}` };
-        }
-        return { disc: null, needsRedirect: `/album/${actualSlug}` };
-      }
-      
-      return { disc: null, needsRedirect: null };
-    } catch (error) {
-      console.error("Error fetching album data:", error);
-      return { disc: null, needsRedirect: null };
+    if (!slugSnap.empty) {
+      const docData = slugSnap.docs[0];
+      const data = docData.data();
+      const albumData: SongType = {
+        id: docData.id,
+        title: data.title || "",
+        artist: data.artist || "",
+        category: data.category || "Album",
+        slug: data.slug,
+        views: data.views,
+        imageBase64: data.imageBase64,
+        description: data.description,
+        archiveLink: data.archiveLink,
+        tracks: data.tracks,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null)
+      };
+      const result = { disc: albumData, needsRedirect: null };
+      setCached(cacheKey, result);
+      return result;
     }
-  },
-  ['album-data'],
-  { revalidate: 3600 }
-);
+
+    // 2. Fallback to ID
+    const docRef = doc(db, "songs", slug);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const actualSlug = data.slug || generateSlug(data.title);
+
+      if (data.category !== "Album") {
+          const result = { disc: null, needsRedirect: `/song/${actualSlug}` };
+          setCached(cacheKey, result);
+          return result;
+      }
+      const result = { disc: null, needsRedirect: `/album/${actualSlug}` };
+      setCached(cacheKey, result);
+      return result;
+    }
+    
+    const fallbackAlbum = FALLBACK_SONGS.find(s => s.category === 'Album' && (s.slug === slug || generateSlug(s.title) === slug || s.id === slug));
+    if (fallbackAlbum) {
+       const result = { disc: fallbackAlbum as unknown as SongType, needsRedirect: null };
+       setCached(cacheKey, result);
+       return result;
+    }
+
+    const result = { disc: null, needsRedirect: null };
+    setCached(cacheKey, result);
+    return result;
+  } catch (error) {
+    console.warn("Could not fetch album data from Firestore: " + (error instanceof Error ? error.message : String(error)));
+    const fallbackAlbum = FALLBACK_SONGS.find(s => s.category === 'Album' && (s.slug === slug || generateSlug(s.title) === slug || s.id === slug));
+    if (fallbackAlbum) {
+      return { disc: fallbackAlbum as unknown as SongType, needsRedirect: null };
+    }
+    return { disc: null, needsRedirect: null };
+  }
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { disc } = await getAlbumData(params.slug);

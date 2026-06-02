@@ -1,7 +1,9 @@
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { SongCard } from '@/components/ui/song-card';
 import { Layers } from 'lucide-react';
+import { getCached, setCached } from '@/lib/cache';
+import { FALLBACK_SONGS } from '@/lib/fallbackData';
 
 interface Song {
   id: string;
@@ -14,31 +16,39 @@ interface Song {
   archiveLink?: string;
 }
 
-import { unstable_cache } from 'next/cache';
-
 export const revalidate = 3600;
 
-const getAlbums = unstable_cache(
-  async () => {
-    try {
-      const q = query(collection(db, 'songs'), where('category', '==', 'Album'), orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null)
-        } as unknown as Song;
-      });
-    } catch (e) {
-      console.error("Firestore fetching error:", e);
-      return [];
+async function getAlbums() {
+  const cacheKey = 'albums-all';
+  const cached = getCached<Song[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const q = query(collection(db, 'songs'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    const allSongs = snapshot.docs.map(doc => {
+      const docData = doc.data();
+      return {
+        id: doc.id,
+        ...docData,
+        createdAt: docData.createdAt?.toDate ? docData.createdAt.toDate().toISOString() : (docData.createdAt || null)
+      } as unknown as Song;
+    });
+
+    const data = allSongs.filter(s => s.category === 'Album');
+
+    if (data.length === 0) {
+      return FALLBACK_SONGS.filter(s => s.category === 'Album');
     }
-  },
-  ['all-albums'],
-  { revalidate: 3600 }
-);
+
+    setCached(cacheKey, data);
+    return data;
+  } catch (e) {
+    console.warn("Could not fetch albums from Firestore: " + (e instanceof Error ? e.message : String(e)));
+    // Graceful fallback to static albums
+    return FALLBACK_SONGS.filter(s => s.category === 'Album');
+  }
+}
 
 export default async function AlbumsPage() {
   const albums = await getAlbums();

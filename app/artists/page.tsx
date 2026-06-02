@@ -4,7 +4,8 @@ import Image from 'next/image';
 import { Users, BadgeCheck } from 'lucide-react';
 import Link from 'next/link';
 import { generateSlug } from '@/lib/slug';
-import { unstable_cache } from 'next/cache';
+import { getCached, setCached } from "@/lib/cache";
+import { FALLBACK_ARTISTS } from '@/lib/fallbackData';
 
 interface Artist {
   id: string;
@@ -16,23 +17,31 @@ interface Artist {
 
 export const revalidate = 3600;
 
-const getArtists = unstable_cache(
-  async () => {
-    try {
-      const q = query(collection(db, 'artists'), orderBy('name', 'asc'));
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Artist));
-    } catch (e) {
-      console.error("Firestore fetching error:", e);
-      return [];
+async function getArtists() {
+  const cacheKey = 'artists-all';
+  const cached = getCached<Artist[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const q = query(collection(db, 'artists'), orderBy('name', 'asc'));
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Artist));
+
+    if (data.length === 0) {
+      return FALLBACK_ARTISTS;
     }
-  },
-  ['all-artists'],
-  { revalidate: 3600 }
-);
+
+    setCached(cacheKey, data);
+    return data;
+  } catch (e) {
+    console.warn("Could not fetch artists from Firestore: " + (e instanceof Error ? e.message : String(e)));
+    // Graceful fallback to static artists
+    return FALLBACK_ARTISTS;
+  }
+}
 
 export default async function ArtistsPage() {
   const artists = await getArtists();

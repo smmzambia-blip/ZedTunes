@@ -19,7 +19,7 @@ export function SiteIdentity() {
             document.title = data.siteName;
           }
           
-          /* Update Favicon
+          // Update Favicon
           if (data.logoBase64) {
             let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
             if (!link) {
@@ -28,7 +28,7 @@ export function SiteIdentity() {
               document.getElementsByTagName('head')[0].appendChild(link);
             }
             link.href = data.logoBase64;
-          } */
+          }
         }
       } catch (e) {
         console.error("Error updating site identity:", e);

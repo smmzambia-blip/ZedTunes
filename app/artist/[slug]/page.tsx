@@ -4,80 +4,99 @@ import { Metadata } from "next";
 import { generateSlug } from "@/lib/slug";
 import { permanentRedirect } from "next/navigation";
 import ArtistClient, { Artist as ArtistType, Song as SongType } from "./ArtistClient";
+import { getCached, setCached } from "@/lib/cache";
+import { FALLBACK_SONGS, FALLBACK_ARTISTS } from "@/lib/fallbackData";
 
 interface PageProps {
   params: { slug: string };
 }
 
-import { unstable_cache } from 'next/cache';
-
 export const revalidate = 3600;
 
-const getArtistData = unstable_cache(
-  async (slug: string) => {
-    try {
-      // 1. Try fetching by slug
-      const qArtist = query(collection(db, "artists"), where("slug", "==", slug));
-      const slugSnap = await getDocs(qArtist);
+async function getArtistData(slug: string) {
+  const cacheKey = `artist-${slug}`;
+  const cached = getCached<{ artist: ArtistType | null; songs: SongType[]; needsRedirect: string | null }>(cacheKey);
+  if (cached) return cached;
 
-      if (!slugSnap.empty) {
-        const docData = slugSnap.docs[0];
-        const data = docData.data();
-        const artistData: ArtistType = {
-          id: docData.id,
-          name: data.name || "",
-          bio: data.bio || "",
-          slug: data.slug,
-          imageBase64: data.imageBase64
-        };
-        
-        // Fetch songs for this artist
-        const qSongs = query(
-          collection(db, 'songs'), 
-          where('artist', '==', artistData.name),
-          orderBy('createdAt', 'desc')
-        );
-        const songsSnapshot = await getDocs(qSongs);
-        const fetchedSongs: SongType[] = songsSnapshot.docs.map(doc => {
-          const sdata = doc.data();
-          return {
-            id: doc.id,
-            title: sdata.title || "",
-            artist: sdata.artist || "",
-            category: sdata.category,
-            slug: sdata.slug,
-            imageBase64: sdata.imageBase64,
-            archiveLink: sdata.archiveLink,
-            createdAt: sdata.createdAt?.toDate ? sdata.createdAt.toDate().toISOString() : (sdata.createdAt || null)
-          };
-        });
+  try {
+    // 1. Try fetching by slug
+    const qArtist = query(collection(db, "artists"), where("slug", "==", slug));
+    const slugSnap = await getDocs(qArtist);
 
-        return { artist: artistData, songs: fetchedSongs, needsRedirect: null };
-      }
-
-      // 2. Fallback to ID
-      const docRef = doc(db, 'artists', slug);
-      const docSnap = await getDoc(docRef);
+    if (!slugSnap.empty) {
+      const docData = slugSnap.docs[0];
+      const data = docData.data();
+      const artistData: ArtistType = {
+        id: docData.id,
+        name: data.name || "",
+        bio: data.bio || "",
+        slug: data.slug,
+        imageBase64: data.imageBase64
+      };
       
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        let actualSlug = data.slug;
-        if (!actualSlug) {
-          actualSlug = generateSlug(data.name);
-          // Pure-ish function
-        }
-        return { artist: null, songs: [], needsRedirect: `/artist/${actualSlug}` };
-      }
+      // Fetch songs for this artist
+      const qSongs = query(
+        collection(db, 'songs'), 
+        orderBy('createdAt', 'desc')
+      );
+      const songsSnapshot = await getDocs(qSongs);
+      const allSongs: SongType[] = songsSnapshot.docs.map(doc => {
+        const sdata = doc.data();
+        return {
+          id: doc.id,
+          title: sdata.title || "",
+          artist: sdata.artist || "",
+          category: sdata.category,
+          slug: sdata.slug,
+          imageBase64: sdata.imageBase64,
+          archiveLink: sdata.archiveLink,
+          createdAt: sdata.createdAt?.toDate ? sdata.createdAt.toDate().toISOString() : (sdata.createdAt || null)
+        };
+      });
 
-      return { artist: null, songs: [], needsRedirect: null };
-    } catch (error) {
-      console.error("Error fetching artist data:", error);
-      return { artist: null, songs: [], needsRedirect: null };
+      const fetchedSongs = allSongs.filter(song => song.artist === artistData.name);
+
+      const result = { artist: artistData, songs: fetchedSongs, needsRedirect: null };
+      setCached(cacheKey, result);
+      return result;
     }
-  },
-  ['artist-data'],
-  { revalidate: 3600 }
-);
+
+    // 2. Fallback to ID
+    const docRef = doc(db, 'artists', slug);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      let actualSlug = data.slug;
+      if (!actualSlug) {
+        actualSlug = generateSlug(data.name);
+      }
+      const result = { artist: null, songs: [], needsRedirect: `/artist/${actualSlug}` };
+      setCached(cacheKey, result);
+      return result;
+    }
+
+    const fallbackArtist = FALLBACK_ARTISTS.find(a => a.slug === slug || generateSlug(a.name) === slug || a.id === slug);
+    if (fallbackArtist) {
+      const fallbackSongs = FALLBACK_SONGS.filter(s => s.artist === fallbackArtist.name);
+      const result = { artist: fallbackArtist as unknown as ArtistType, songs: fallbackSongs as unknown as SongType[], needsRedirect: null };
+      setCached(cacheKey, result);
+      return result;
+    }
+
+    const result = { artist: null, songs: [], needsRedirect: null };
+    setCached(cacheKey, result);
+    return result;
+  } catch (error) {
+    console.warn("Could not fetch artist data from Firestore: " + (error instanceof Error ? error.message : String(error)));
+    const fallbackArtist = FALLBACK_ARTISTS.find(a => a.slug === slug || generateSlug(a.name) === slug || a.id === slug);
+    if (fallbackArtist) {
+      const fallbackSongs = FALLBACK_SONGS.filter(s => s.artist === fallbackArtist.name);
+      return { artist: fallbackArtist as unknown as ArtistType, songs: fallbackSongs as unknown as SongType[], needsRedirect: null };
+    }
+    return { artist: null, songs: [], needsRedirect: null };
+  }
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { artist } = await getArtistData(params.slug);

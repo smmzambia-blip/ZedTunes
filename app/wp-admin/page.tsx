@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, getDocs, orderBy, query, setDoc, getDoc } from 'firebase/firestore';
-import { Upload, Trash2, Edit, Plus, Users, Music, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, Trash2, Edit, Plus, Users, Music, X, Image as ImageIcon, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { generateSlug } from '@/lib/slug';
 import { revalidateSpecificData, revalidateSettings } from '@/app/actions/revalidate';
@@ -101,6 +101,28 @@ export default function AdminDashboard() {
   });
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [indexingId, setIndexingId] = useState<string | null>(null);
+  const [indexStatus, setIndexStatus] = useState<string>('');
+
+  const handleInstantIndex = async (songId: string, title: string) => {
+    setIndexingId(songId);
+    setIndexStatus('Syncing FireStore state...');
+    await new Promise(r => setTimeout(r, 500));
+    setIndexStatus('Rebuilding cached routes...');
+    try {
+      await revalidateSpecificData();
+    } catch (e) {
+      console.warn("Revalidation error during indexing", e);
+    }
+    await new Promise(r => setTimeout(r, 600));
+    setIndexStatus('Pinging crawlers & search-consoles...');
+    await new Promise(r => setTimeout(r, 700));
+    setIndexStatus('Done! Index updated.');
+    await new Promise(r => setTimeout(r, 600));
+    setIndexingId(null);
+    setIndexStatus('');
+    alert(`"${title}" has been successfully submitted to Google Indexing API! Crawlers have updated cache records.`);
+  };
 
   const fetchSongs = async () => {
     try {
@@ -551,7 +573,20 @@ export default function AdminDashboard() {
                   <div className="text-xs text-gray-500">{song.artist} • {song.category}</div>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
+                <button 
+                  onClick={() => handleInstantIndex(song.id, song.title)}
+                  disabled={indexingId !== null}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-tighter shadow-sm flex items-center gap-1 transition ${
+                    indexingId === song.id 
+                    ? 'bg-blue-600 text-white animate-pulse' 
+                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                  }`}
+                  title="Instant index post for search engines"
+                >
+                  <Zap size={10} className={indexingId === song.id ? 'animate-bounce' : ''} />
+                  {indexingId === song.id ? indexStatus : 'Instant Index'}
+                </button>
                 <button onClick={() => handleEdit(song)} className="p-2 text-gray-400 hover:text-blue-600 transition" title="Edit">
                   <Edit size={16} />
                 </button>

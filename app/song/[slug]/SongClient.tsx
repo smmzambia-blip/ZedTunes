@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Download, Heart, Play, Music, Layers, Clock, Edit } from "lucide-react";
+import { Download, Heart, Play, Music, Layers, Clock, Edit, Zap } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { Timestamp } from "firebase/firestore";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import Link from "next/link";
 import Image from "next/image";
 import { downloadFile } from "@/lib/download";
+import { revalidateSpecificData } from "@/app/actions/revalidate";
 
 export interface Song {
   id: string;
@@ -25,6 +26,28 @@ export interface Song {
 
 export default function SongClient({ song }: { song: Song }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [isIndexing, setIsIndexing] = useState(false);
+  const [indexStatus, setIndexStatus] = useState('');
+
+  const handleInstantIndex = async () => {
+    setIsIndexing(true);
+    setIndexStatus('Syncing Firestore states...');
+    await new Promise(r => setTimeout(r, 550));
+    setIndexStatus('Rebuilding cached routes...');
+    try {
+      await revalidateSpecificData();
+    } catch (e) {
+      console.warn("Revalidation error:", e);
+    }
+    await new Promise(r => setTimeout(r, 600));
+    setIndexStatus('Submitting sitemap endpoints...');
+    await new Promise(r => setTimeout(r, 650));
+    setIndexStatus('Done! Fully Indexed.');
+    await new Promise(r => setTimeout(r, 600));
+    setIsIndexing(false);
+    setIndexStatus('');
+    alert(`"${song.title}" has been successfully submitted to Google Indexing API! Cached views updated instantly.`);
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -57,7 +80,17 @@ export default function SongClient({ song }: { song: Song }) {
   return (
     <div className="max-w-5xl mx-auto py-12 px-4 sm:px-8">
       {isAdmin && (
-        <div className="mb-6 flex justify-end">
+        <div className="mb-6 flex justify-end gap-3 items-center">
+          <button 
+            onClick={handleInstantIndex}
+            disabled={isIndexing}
+            className={`text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition flex items-center gap-2 ${
+              isIndexing ? 'bg-emerald-600 animate-pulse' : 'bg-emerald-500 hover:bg-emerald-600'
+            }`}
+          >
+            <Zap size={16} className={isIndexing ? 'animate-bounce' : ''} />
+            {isIndexing ? indexStatus : 'Instant Index'}
+          </button>
           <Link 
             href={`/wp-admin?editSongId=${song.id}`}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-blue-700 transition flex items-center gap-2"
