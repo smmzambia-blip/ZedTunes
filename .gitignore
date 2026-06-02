@@ -30,9 +30,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # env files (can opt-in for committing if needed)
-.env
-.env.local
-.env.*.local
+.env*
 
 # vercel
 .vercel

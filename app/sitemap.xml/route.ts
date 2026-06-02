@@ -1,111 +1,83 @@
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import { NextResponse } from 'next/server';
-import { QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { generateSlug } from '@/lib/slug';
 
-export const revalidate = 3600; // 1 hour
+export const revalidate = 86400; // 24 hours
 
-/**
- * Sitemap route handler for /sitemap.xml
- * This route handler intercepts requests to /sitemap.xml
- */
 export async function GET() {
   const baseUrl = 'https://zedtunez.vercel.app';
 
   const staticRoutes = [
-    { url: baseUrl, changefreq: 'daily', priority: '1.0' },
-    { url: `${baseUrl}/music`, changefreq: 'weekly', priority: '0.8' },
-    { url: `${baseUrl}/albums`, changefreq: 'weekly', priority: '0.8' },
-    { url: `${baseUrl}/artists`, changefreq: 'weekly', priority: '0.8' },
-    { url: `${baseUrl}/about`, changefreq: 'monthly', priority: '0.5' },
-    { url: `${baseUrl}/contact`, changefreq: 'monthly', priority: '0.5' },
-    { url: `${baseUrl}/privacy`, changefreq: 'yearly', priority: '0.3' },
-    { url: `${baseUrl}/terms`, changefreq: 'yearly', priority: '0.3' },
+    '',
+    '/music',
+    '/albums',
+    '/artists',
+    '/about',
+    '/contact',
+    '/privacy',
+    '/terms',
   ];
 
-  const dynamicUrlsArray: { url: string; changefreq: string; priority: string }[] = [];
-
+  let songsData: { id: string; title: string; slug?: string; category?: string }[] = [];
+  let artistsData: { id: string; name: string; slug?: string }[] = [];
   try {
-    // Add timeout to prevent hanging (5 seconds)
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout')), 5000)
-    );
+    const songsSnapshot = await getDocs(collection(db, 'songs'));
+    songsData = songsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return { 
+        id: doc.id, 
+        title: data.title || '', 
+        slug: data.slug, 
+        category: data.category 
+      };
+    });
 
-    try {
-      const { db } = await import('@/lib/firebase');
-      const { collection, getDocs } = await import('firebase/firestore');
-      const { generateSlug } = await import('@/lib/slug');
-
-      // Fetch songs with timeout
-      try {
-        const songsSnapshot = (await Promise.race([
-          getDocs(collection(db, 'songs')),
-          timeoutPromise,
-        ])) as QuerySnapshot<DocumentData>;
-
-        songsSnapshot.docs.forEach((doc) => {
-          const data = doc.data();
-          if (data.slug || data.title) {
-            const slug = data.slug || generateSlug(data.title || '');
-            const prefix = data.category === 'Album' ? 'album' : 'song';
-            dynamicUrlsArray.push({
-              url: `${baseUrl}/${prefix}/${slug}`,
-              changefreq: 'weekly',
-              priority: '0.6',
-            });
-          }
-        });
-      } catch (songError) {
-        console.error('Error fetching songs for sitemap:', songError);
-      }
-
-      // Fetch artists with timeout
-      try {
-        const artistsSnapshot = (await Promise.race([
-          getDocs(collection(db, 'artists')),
-          timeoutPromise,
-        ])) as QuerySnapshot<DocumentData>;
-
-        artistsSnapshot.docs.forEach((doc) => {
-          const data = doc.data();
-          if (data.slug || data.name) {
-            const slug = data.slug || generateSlug(data.name || '');
-            dynamicUrlsArray.push({
-              url: `${baseUrl}/artist/${slug}`,
-              changefreq: 'weekly',
-              priority: '0.5',
-            });
-          }
-        });
-      } catch (artistError) {
-        console.error('Error fetching artists for sitemap:', artistError);
-      }
-    } catch (importError) {
-      console.error('Error importing Firebase modules:', importError);
-    }
+    const artistsSnapshot = await getDocs(collection(db, 'artists'));
+    artistsData = artistsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return { 
+        id: doc.id, 
+        name: data.name || '', 
+        slug: data.slug 
+      };
+    });
   } catch (error) {
-    console.error('Error in sitemap generation:', error);
+    console.error('Error fetching data for sitemap:', error);
   }
 
-  // Combine static and dynamic routes
-  const allUrls = [...staticRoutes, ...dynamicUrlsArray];
-  const now = new Date().toISOString();
-
-  // Generate XML sitemap
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allUrls.map((item) => `  <url>
-    <loc>${item.url}</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>${item.changefreq}</changefreq>
-    <priority>${item.priority}</priority>
+${staticRoutes.map(route => `  <url>
+    <loc>${baseUrl}${route}</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>${route === '' ? 'daily' : 'weekly'}</changefreq>
+    <priority>${route === '' ? '1.0' : '0.8'}</priority>
   </url>`).join('\n')}
+${songsData.map(song => {
+  const slug = song.slug || generateSlug(song.title);
+  const prefix = song.category === 'Album' ? 'album' : 'song';
+  return `  <url>
+    <loc>${baseUrl}/${prefix}/${slug}</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>`;
+}).join('\n')}
+${artistsData.map(artist => {
+  const slug = artist.slug || generateSlug(artist.name);
+  return `  <url>
+    <loc>${baseUrl}/artist/${slug}</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>`;
+}).join('\n')}
 </urlset>`;
 
-  return new NextResponse(xml, {
-    status: 200,
+  return new NextResponse(xml.trim(), {
     headers: {
-      'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
-      'X-Content-Type-Options': 'nosniff',
+      'Content-Type': 'application/xml',
     },
   });
 }
