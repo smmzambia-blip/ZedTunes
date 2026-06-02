@@ -2,6 +2,7 @@ export const FALLBACK_SETTINGS = {
   siteName: "ZedTunes",
   siteBio: "Download Latest Zambian Music, Albums, EP & Kalindula Classics.",
   logoBase64: "", // Will fallback to default layout styles or custom logo elements
+  underConstruction: false,
 };
 
 export interface FallbackSong {

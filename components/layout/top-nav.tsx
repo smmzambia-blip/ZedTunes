@@ -38,6 +38,13 @@ export function TopNav({ initialSettings }: { initialSettings?: { siteName?: str
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      if (typeof window !== "undefined") {
+        if (currentUser?.email === "hilzmg70@gmail.com") {
+          localStorage.setItem("zedtunes_is_admin", "true");
+        } else {
+          localStorage.removeItem("zedtunes_is_admin");
+        }
+      }
     });
     return () => unsubscribe();
   }, [initialSettings, siteSettings?.siteName]);

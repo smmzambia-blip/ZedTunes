@@ -10,18 +10,40 @@ import Link from "next/link";
 
 interface UnderConstructionGuardProps {
   children: React.ReactNode;
+  initialUnderConstruction?: boolean;
 }
 
-export function UnderConstructionGuard({ children }: UnderConstructionGuardProps) {
+export function UnderConstructionGuard({ children, initialUnderConstruction = false }: UnderConstructionGuardProps) {
   const pathname = usePathname();
   const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [isUnderConstruction, setIsUnderConstruction] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isUnderConstruction, setIsUnderConstruction] = useState(initialUnderConstruction);
+  
+  // High-performance loading optimization:
+  // - If the site is already LIVE, there's no reason to show any loading spinner.
+  // - If the site is UNDER CONSTRUCTION, only show a loading spinner if the client was previously marked as an administrator
+  //   (to prevent regular visitors from seeing a loading screen at all before they get redirected).
+  const [loading, setLoading] = useState(() => {
+    if (!initialUnderConstruction) return false;
+    if (typeof window !== "undefined") {
+      const isLikelyAdmin = localStorage.getItem("zedtunes_is_admin") === "true";
+      return isLikelyAdmin;
+    }
+    return false;
+  });
 
   useEffect(() => {
     // 1. Subscribe to Auth changes
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      if (typeof window !== "undefined") {
+        if (currentUser?.email === "hilzmg70@gmail.com") {
+          localStorage.setItem("zedtunes_is_admin", "true");
+        } else {
+          localStorage.removeItem("zedtunes_is_admin");
+        }
+      }
+      // Once auth resolves, we can safely stop loading (this applies to admins checking page permission)
+      setLoading(false);
     });
 
     // 2. Subscribe to Site Settings (real-time so state updates instantly)

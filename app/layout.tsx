@@ -58,7 +58,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const settings = await getSiteSettings();
+  const settings = (await getSiteSettings()) as unknown as {
+    siteName?: string;
+    siteBio?: string;
+    logoBase64?: string;
+    underConstruction?: boolean;
+  };
   
   return (
     <html lang="en">
@@ -67,7 +72,7 @@ export default async function RootLayout({
           <section className="flex-1 overflow-y-auto flex flex-col">
             <TopNav initialSettings={{ siteName: settings?.siteName, siteBio: settings?.siteBio, logoBase64: settings?.logoBase64 }} />
             <div className="p-4 sm:p-8 flex flex-col gap-10 flex-1">
-              <UnderConstructionGuard>
+              <UnderConstructionGuard initialUnderConstruction={settings?.underConstruction || false}>
                 {children}
               </UnderConstructionGuard>
             </div>
